@@ -70,7 +70,7 @@ return [
             ],
         ],
         'manual' => [
-            'domain' => 'https://re5-support.iqnet.co.jp',
+            'domain' => 'https://re5-support.iqnet.co.jp/static/v13',
         ],
         'videoMeeting' => [
             'zoom' => [
