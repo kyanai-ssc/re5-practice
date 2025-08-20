@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set "Cache-Control" "must-revalidate, no-cache, no-store"
+    Header always set "Pragma" "no-cache"
+    Header always set "X-Content-Type-Options" "nosniff"
+    Header always unset "X-Frame-Options"
+    Header always set "X-XSS-Protection" "1; mode=block"
+    Header always set "Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+    Header always set "X-Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+</IfModule>
+
+# メンテナンス時はコメントアウト
+<RequireAny>
+    Require all denied
+</RequireAny>

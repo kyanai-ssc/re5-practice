@@ -1,0 +1,1 @@
+  <span class="txt"><?= h($word) ?></span>

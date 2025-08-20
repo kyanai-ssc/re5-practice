@@ -1,0 +1,2 @@
+﻿id,name,access_setting,access_operator,default_flg,created,modified
+1,デフォルト,["All__all"],["All__all"],1,NOW(),NOW()

@@ -1,0 +1,50 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    #集中アクセス
+    ErrorDocument 503 /sorry/index.html
+    RewriteCond %{ENV:SORRY_ACCESS} ^1$
+    RewriteCond %{REMOTE_ADDR} !=124.37.96.190
+    RewriteCond %{REMOTE_ADDR} !=124.37.96.187
+    RewriteCond %{REQUEST_URI} !=/index.php
+    RewriteCond %{REQUEST_URI} !=/sorry/index.html
+    RewriteRule ^.*$ - [R=503,L]
+
+    #メンテナンス用
+    #ErrorDocument 503 /maintenance/index.html
+    #SetEnvIf Remote_Addr "^124\.37\.96\.190$" X-Maintenance-Allowed-Ip=1
+    #SetEnvIf Remote_Addr "^124\.37\.96\.187$" X-Maintenance-Allowed-Ip=1
+    #RewriteCond %{ENV:X-Maintenance-Allowed-Ip} !=1
+    #RewriteCond %{REQUEST_URI} !^/maintenance/
+    #RewriteRule ^ - [R=503,L]
+
+    RewriteCond "%{HTTP_HOST}" "!^[\-\.0-9a-z]{1,255}$"
+    RewriteRule ^ - [R=403,L]
+
+    RewriteCond "%{HTTP_HOST}" "^(.+)$"
+    RewriteCond "%{DOCUMENT_ROOT}/../hosts/%1.php" !-f
+    RewriteRule ^ - [R=403,L]
+
+    RewriteCond "%{HTTPS}" "off"
+    RewriteRule ^ "https://%{HTTP_HOST}%{REQUEST_URI}" [R=301,L]
+
+    RewriteCond "%{REQUEST_FILENAME}" -f
+    RewriteCond "%{QUERY_STRING}" "^(?:.+&)?frame=(?:[^&]+)(?:&.+)?$"
+    RewriteRule "^index\.php$" - [E=X_FRAME_OPTIONS_UNSET,L]
+
+    RewriteCond "%{REQUEST_FILENAME}" -f
+    RewriteRule ^ - [L]
+
+    RewriteRule ^ "index.php" [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set "Cache-Control" "must-revalidate, no-cache, no-store"
+    Header always set "Pragma" "no-cache"
+    Header always set "X-Content-Type-Options" "nosniff"
+    Header always unset "X-Frame-Options" env=X_FRAME_OPTIONS_UNSET
+    Header always set "X-Frame-Options" "SAMEORIGIN" env=!X_FRAME_OPTIONS_UNSET
+    Header always set "X-XSS-Protection" "1; mode=block"
+    #Header always set "Content-Security-Policy" "default-src 'self'; script-src * 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data:;"
+    #Header always set "X-Content-Security-Policy" "default-src 'self'; script-src * 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src * data:;"
+</IfModule>

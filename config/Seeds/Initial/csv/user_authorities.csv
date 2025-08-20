@@ -1,0 +1,3 @@
+﻿id,name,access,form_pattern_id,calendar_type,calendar_type_default,login_name_form_item_id,reservation_limit_all,reservation_limit_future,reservation_limit_month,reservation_limit_day,guest_flg,default_flg
+1,ゲスト,"[""All__all""]",1,"[1,2,3,4,5,6,7,8]",2,,,,,,1,1
+2,ログイン,"[""All__all""]",1,"[1,2,3,4,5,6,7,8]",2,22,,,,,0,1

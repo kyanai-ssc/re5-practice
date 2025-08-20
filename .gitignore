@@ -1,0 +1,97 @@
+# CakePHP specific files #
+##########################
+/accesslog/*
+/clients/*
+!/clients/.gitkeep
+/config/.env
+/config/app_local.php
+/config/env/env.php
+/config/env/local/*
+/config/Migrations/schema-dump-default.lock
+/hosts/*
+!/hosts/.gitkeep
+/logs/*
+!/logs/command/
+/logs/command/*
+!/logs/command/.gitkeep
+/tmp/*
+!/tmp/cache/
+!/tmp/delete/
+!/tmp/error/
+!/tmp/files/
+!/tmp/import/
+!/tmp/sessions/
+!/tmp/tests/
+/tmp/cache/*
+!/tmp/cache/data/
+!/tmp/cache/models/
+!/tmp/cache/persistent/
+!/tmp/cache/views/
+/tmp/cache/data/*
+!/tmp/cache/data/.gitkeep
+/tmp/cache/models/*
+!/tmp/cache/models/.gitkeep
+/tmp/cache/persistent/*
+!/tmp/cache/persistent/.gitkeep
+/tmp/cache/views/*
+!/tmp/cache/views/.gitkeep
+/tmp/delete/*
+!/tmp/delete/.gitkeep
+/tmp/error/*
+!/tmp/error/.gitkeep
+/tmp/files/*
+!/tmp/files/.gitkeep
+/tmp/import/*
+!/tmp/import/.gitkeep
+/tmp/sessions/*
+!/tmp/sessions/.gitkeep
+/tmp/tests/*
+!/tmp/tests/.gitkeep
+/.htpasswd
+/tests.sqlite
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+# Icon must end with two \r
+Icon
+
+ehthumbs.db
+Thumbs.db
+.directory
+
+# Tool specific files #
+#######################
+# PHPUnit
+.phpunit.result.cache
+tests.sqlite
+# vim
+*~
+*.swp
+*.swo
+# sublime text & textmate
+*.sublime-*
+*.stTheme.cache
+*.tmlanguage.cache
+*.tmPreferences.cache
+# Eclipse
+.settings/*
+# JetBrains, aka PHPStorm, IntelliJ IDEA
+.idea/*
+# NetBeans
+nbproject/*
+# Visual Studio Code
+.vscode
+# nova
+.nova
+# Sass preprocessor
+.sass-cache/
+# node
+/node_modules/*
+# yarn
+yarn-debug.log
+yarn-error.log

@@ -1,0 +1,7 @@
+﻿id,type,name,display_flg,sort_no,default_flg
+1,1,クレジットカード,1,1,1
+2,2,現金,1,2,1
+3,3,銀行振込,1,3,1
+4,4,PayPay,0,4,1
+5,5,ApplePay,0,5,1
+6,6,auPAY,0,6,1

@@ -1,0 +1,15 @@
+cache:
+  key: "$CI_JOB_NAME"
+  paths:
+    - vendor/
+    - composer.lock
+
+before_script:
+  - php -v
+  - composer install --no-progress --no-scripts --no-suggest
+
+PHP 7.4:
+  image: git.test.local:5002/docker/php:7.4-apache-ubuntu20.04
+  script:
+    - composer code-check
+    - phpdbg -qrr vendor/phpunit/phpunit/phpunit --coverage-text --colors=never

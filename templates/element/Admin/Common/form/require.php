@@ -1,0 +1,1 @@
+<span class="any">必須</span>

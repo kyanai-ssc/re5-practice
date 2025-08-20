@@ -1,0 +1,5 @@
+parameters:
+    bootstrapFiles:
+        - tests/bootstrap.php
+    fileExtensions:
+        - php

@@ -1,0 +1,103 @@
+stages:
+  - test
+  - deploy
+
+.Test Template:
+  image: git.test.local:5002/docker/php:8.0-cli-rockylinux9.3
+  stage: test
+  only:
+    - branches
+  before_script:
+    - cp config/env/env_gitlab-ci.php config/env/env.php
+
+.Deploy Template:
+  image: git.test.local:5002/docker/asp-ci:ubuntu20
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+
+# コードフォーマット
+PHP Code Sniffer:
+  extends: .Test Template
+  script:
+    - chmod +x vendor/bin/phpcs
+    - chmod +x vendor/squizlabs/php_codesniffer/bin/phpcs
+    - composer cs-check
+
+# 静的解析 1
+PHPStan:
+  extends: .Test Template
+  script:
+    - chmod +x vendor/bin/phpstan
+    - chmod +x vendor/phpstan/phpstan/phpstan
+    - composer stan
+
+# 静的解析 2
+#Psalm:
+#  extends: .Test Template
+#  script:
+#    - chmod +x vendor/bin/psalm
+#    - chmod +x vendor/vimeo/psalm/psalm
+#    - composer psalm
+
+# ユニットテスト
+#PHPUnit:
+#  extends: .Test Template
+#  script:
+#    - chmod +x vendor/bin/phpunit
+#    - chmod +x vendor/phpunit/phpunit/phpunit
+#    - composer test
+
+Deploy Develop:
+  extends: .Deploy Template
+  only:
+    - develop
+  environment:
+    name: develop
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H ${DEPLOY_HOST_DEVELOP} >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - echo "${DEPLOY_KEY_DEVELOP}" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+    - ssh ${DEPLOY_SSH_OPTION_DEVELOP} ${DEPLOY_USER_DEVELOP}@${DEPLOY_HOST_DEVELOP} "cd ${DEPLOY_PATH_DEVELOP} && git pull && ./bin/deploy"
+    - ssh-add -D
+    - eval $(ssh-agent -k)
+
+Deploy Staging:
+  extends: .Deploy Template
+  only:
+    - staging
+  environment:
+    name: staging
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H ${DEPLOY_HOST_STAGING} >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - echo "${DEPLOY_KEY_STAGING}" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+    - ssh ${DEPLOY_SSH_OPTION_STAGING} ${DEPLOY_USER_STAGING}@${DEPLOY_HOST_STAGING} "cd ${DEPLOY_PATH_STAGING} && git pull && ./bin/deploy"
+    - ssh-add -D
+    - eval $(ssh-agent -k)
+
+Deploy Update:
+  extends: .Deploy Template
+  only:
+    - update
+  environment:
+    name: update
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H ${DEPLOY_HOST_UPDATE} >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - eval $(ssh-agent -s)
+    - echo "${DEPLOY_KEY_UPDATE}" | tr -d '\r' | ssh-add - > /dev/null
+  script:
+    - ssh ${DEPLOY_SSH_OPTION_UPDATE} ${DEPLOY_USER_UPDATE}@${DEPLOY_HOST_UPDATE} "cd ${DEPLOY_PATH_UPDATE} && git pull && ./bin/deploy"
+    - ssh-add -D
+    - eval $(ssh-agent -k)
