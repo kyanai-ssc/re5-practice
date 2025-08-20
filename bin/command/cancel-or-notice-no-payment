@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+readonly APPLICATION_ROOT="$(cd "$(dirname "${0}")/../../" && pwd)"
+. ${APPLICATION_ROOT}/bin/config/config
+
+(cd "${APPLICATION_ROOT}/" && ${PHP_PATH} ${APPLICATION_ROOT}/bin/cake.php client all --command="${PHP_PATH} ${APPLICATION_ROOT}/bin/cake.php cancel-or-notice-no-payment --client=%CLIENT% --quiet" --quiet)

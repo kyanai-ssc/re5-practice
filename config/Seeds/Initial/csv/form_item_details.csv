@@ -1,0 +1,4 @@
+﻿id,form_item_id,front_word,back_word,text_lower_limit,text_upper_limit,text_input_translate,text_input_check,date_lower_limit,date_upper_limit_type,date_upper_limit_absolute,date_upper_limit_relative,date_default,sort_no
+1,22,姓,,,50,,,,,,,,1
+2,22,名,,,50,,,,,,,,2
+3,25,,,,10000,,,,,,,,1

@@ -1,0 +1,6 @@
+<IfModule mod_headers.c>
+    Header always unset "Cache-Control"
+    Header always unset "Pragma"
+    Header always set "Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+    Header always set "X-Content-Security-Policy" "default-src 'self'; style-src 'self' 'unsafe-inline';"
+</IfModule>

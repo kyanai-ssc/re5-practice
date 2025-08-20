@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+readonly APPLICATION_ROOT="$(cd "$(dirname "${0}")/../" && pwd)"
+
+(cd "${APPLICATION_ROOT}/" && bin/cache_clear)
+if test $? -ne 0 ; then
+    exit 1
+fi

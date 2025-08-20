@@ -1,0 +1,7 @@
+﻿id,name,default_name,sort_no,status_type,keep_stock_flg,search_display_flg
+1,確定,確定,1,1,1,1
+2,仮申込,仮申込,2,2,0,1
+3,仮予約,仮予約,3,2,1,1
+4,来訪済み,来訪済み,4,3,1,1
+5,キャンセル,キャンセル,5,4,0,1
+6,欠席,欠席,6,5,0,1

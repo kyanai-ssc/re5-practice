@@ -1,0 +1,66 @@
+{
+    "name": "friendsofcake/search",
+    "description": "CakePHP Search plugin using PRG pattern",
+    "type": "cakephp-plugin",
+    "keywords": [
+        "cakephp",
+        "prg",
+        "filter",
+        "search"
+    ],
+    "homepage": "https://github.com/FriendsOfCake/search",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Christian Winther",
+            "role": "Author"
+        },
+        {
+            "name": "ADmad",
+            "role": "Contributor",
+            "homepage": "https://github.com/admad"
+        }
+    ],
+    "require": {
+        "cakephp/cakephp": "^4.0"
+    },
+    "require-dev": {
+        "cakephp/twig-view": "^1.1.1",
+        "cakephp/bake": "^2.3",
+        "phpunit/phpunit": "~8.5.0 || ^9.3",
+        "cakephp/cakephp-codesniffer": "^4.0",
+        "muffin/webservice": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Search\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Search\\Test\\": "tests/",
+            "Cake\\Test\\Fixture\\": "vendor/cakephp/cakephp/tests/Fixture/"
+        }
+    },
+    "support": {
+        "source": "https://github.com/FriendsOfCake/search",
+        "issues": "https://github.com/FriendsOfCake/search/issues"
+    },
+    "scripts": {
+        "cs-check": "phpcs -p src/ tests/",
+        "cs-fix": "phpcbf src/ tests/",
+        "stan-setup": "cp composer.json composer.backup && composer require --dev phpstan/phpstan:~1.7.0 psalm/phar:~4.23.0 && mv composer.backup composer.json",
+        "phpstan": "phpstan.phar analyse",
+        "psalm": "psalm.phar",
+        "stan": [
+            "@phpstan",
+            "@psalm"
+        ],
+        "test": "phpunit"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
