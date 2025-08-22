@@ -23,6 +23,7 @@ class Phase1 extends AbstractMigration
         $this->table('label_authorities', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'biginteger', [
                 'autoIncrement' => true,
+                'generated' => null,
                 'default' => null,
                 'limit' => 20,
                 'null' => false,
@@ -41,16 +42,25 @@ class Phase1 extends AbstractMigration
                 'default' => 'CURRENT_TIMESTAMP',
                 'limit' => null,
                 'null' => false,
-                'precision' => 6,
-                'scale' => 6,
             ])
             ->addColumn('modified', 'timestamp', [
                 'default' => 'CURRENT_TIMESTAMP',
                 'limit' => null,
                 'null' => false,
-                'precision' => 6,
-                'scale' => 6,
             ])
+            ->addIndex(
+                [
+                    'label_id',
+                    'user_authority_id',
+                ],
+                ['unique' => true, 'name' => 'label_authorities_label_id_user_authority_id']
+            )
+            ->addIndex(
+                [
+                    'user_authority_id',
+                ],
+                ['name' => 'label_authorities_user_authority_id']
+            )
             ->create();
 
         $this->table('user_authorities')
@@ -62,10 +72,10 @@ class Phase1 extends AbstractMigration
             ->update();
         
         $this->table('options')
-            ->addColumn('charge', 'integer', [
+            ->addColumn('option_unit_time', 'integer', [
                 'default' => null,
                 'limit' => 10,
-                'null' => false,
+                'null' => true,
             ])
             ->update();
     }
@@ -87,7 +97,7 @@ class Phase1 extends AbstractMigration
         //     ->update();
 
         // $this->table('options')
-        //     ->removeColumn('charge')
+        //     ->removeColumn('option_unit_time')
         //     ->update();
     }
 }
