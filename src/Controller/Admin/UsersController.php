@@ -39,6 +39,7 @@ class UsersController extends AdminAppController
             'delete',
             'download',
             'sample',
+            'approval',
         ]);
 
         return $response;
@@ -512,5 +513,56 @@ class UsersController extends AdminAppController
             $filePath,
             true
         );
+    }
+
+    /**
+     * approval method
+     *
+     * @param int $id 会員ID
+     * @return \Cake\Http\Response|null|void
+     */
+    public function approval($id = null)//TODO
+    {
+        $this->getRequest()->allowMethod('post');
+
+        /** @var \App\Model\Table\UsersTable $usersTable */
+        $usersTable = $this->fetchTable('Users');
+
+        $user = $usersTable->get($id, [
+            'finder' => 'edit',
+        ]);
+
+        // 顧客に登録されている属性を取得
+        $additionValues = $user->get('addition_values');
+        $attributeId = $additionValues[Configure::read('Setting.formItemAdditionValues.attribute')]; //属性の番号
+
+        /** @var \App\Model\Table\FormItemChoicesTable $formItemChoicesTable */
+        $formItemChoicesTable = $this->fetchTable('FormItemChoices');
+
+        $attribute = $formItemChoicesTable->get($attributeId);
+        $attributeName = $attribute->name;
+
+        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
+        $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+
+        // 顧客に登録されている属性と同じ名前の権限名の顧客の権限データを取得
+        $userAuthority = $userAuthoritiesTable->getSameNameAuthority($attributeName);
+
+        if ($userAuthority == null) {
+            $this->Flash->set((string)__(Message::NO_EXIST_ATTRIBUTE_AUTHORITY_NAME), [
+            'key' => 'usersErrors',
+            'element' => 'errors',
+            ]);
+        }
+
+        // 取得した権限を会員の権限に書き換える
+        $usersTable->updateAuthority($user, (int)$userAuthority['id']);
+
+        return $this->redirect([
+            'prefix' => 'Admin',
+            'controller' => 'Users',
+            'action' => 'list',
+            '?' => Configure::read('Setting.searchInput.searchQuery'),
+        ]);
     }
 }

@@ -1,3 +1,7 @@
+<?php
+use App\Model\Entity\FormItem;
+?>
+
 <tr class="js_form_items_element_<?= h($formItem->session_key) ?> parent">
     <td class="handle">
         <svg class="icon is-drag">
@@ -19,7 +23,7 @@
                 ]) ?>
 
             </li>
-            <?php if ($formItem->canDelete()): ?>
+            <?php if ($formItem->canDelete() && $formItem->session_key !== FormItem::ATTRIBUTE): ?>
                 <li>
                     <?= $this->Form->button('<svg class="icon"><use xlink:href="#icon_tool_delete"/></svg>', [
                         'type' => 'button',

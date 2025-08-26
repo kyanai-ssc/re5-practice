@@ -374,6 +374,11 @@ class FormItem extends AppEntity
     protected $smartLock = null;
 
     /**
+     * id:属性
+     */
+    public const ATTRIBUTE = 35;
+
+    /**
      * @inheritDoc
      */
     protected $_accessible = [

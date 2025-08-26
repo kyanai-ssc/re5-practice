@@ -1,6 +1,7 @@
 <?php
 
 use App\Model\Entity\AdminListItem;
+use App\Model\Entity\UserAuthority;
 
 $this->assign('title', '顧客一覧');
 $this->assign('headerType', 'data');
@@ -238,6 +239,24 @@ if ($selectUser) {
                                                     'escapeTitle' => false,
                                                 ]) ?>
                                                 <?= $this->Authority->isAuthority($deleteBtn, 'Users', 'delete'); ?>
+                                            </li>
+                                        <?php endif; ?>
+                                        <?php if($user->hasAttribute() && $user->get('user_authority_id') === UserAuthority::DEFAULT_AUTHORITY): ?>
+                                            <li>
+                                                <?= $this->Form->button('<svg class="icon"><use xlink:href="#icon_check"/></svg>', [
+                                                    'type' => 'button',
+                                                    'class' => ['js_post_confirm', 'btn-tool', 'is-approval'],
+                                                    'title' => '承認',
+                                                    'data-confirm-message' => '顧客の承認をおこなってよろしいですか？',
+                                                    'data-confirm-title' => '顧客の承認',
+                                                    'data-url' => $this->Url->build([
+                                                        'prefix' => 'Admin',
+                                                        'controller' => 'Users',
+                                                        'action' => 'approval',
+                                                        'id' => $user->id,
+                                                    ], ['escape' => false]),
+                                                    'escapeTitle' => false,
+                                                ]) ?>
                                             </li>
                                         <?php endif; ?>
                                     <?php else: ?>

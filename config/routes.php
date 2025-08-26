@@ -340,6 +340,15 @@ return function (RouteBuilder $routes): void {
             ->setPass(['id'])
             ->setPatterns(['id' => '\\d{1,18}']);
 
+        //属性承認
+       $builder
+            ->connect('/users/approval/{id}', [
+                'controller' => 'Users',
+                'action' => 'approval',
+            ])
+            ->setPass(['id'])
+            ->setPatterns(['id' => '\\d{1,18}']);
+
         // IDを指定するアクション
         $builder
             ->connect('/{controller}/view/{id}', [

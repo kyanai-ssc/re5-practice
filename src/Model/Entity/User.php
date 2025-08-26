@@ -8,6 +8,7 @@ use App\Model\Entity\Traits\AdditionValuesTrait;
 use App\Model\InputType\Item\Type\LoginNameInterface;
 use App\Utility\DateTimeUtility;
 use Cake\Auth\DefaultPasswordHasher;
+use Cake\Core\Configure;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\I18n\FrozenDate;
 use Cake\Utility\Security;
@@ -447,5 +448,20 @@ class User extends AppEntity
         $expirationDateTo = $this->get('expiration_date_to');
 
         return DateTimeUtility::isWithinDate($dateFrom, $dateTo, $expirationDateFrom, $expirationDateTo);
+    }
+
+    /**
+     * 属性がセットされているかチェック
+     *
+     * @return bool
+     */
+    public function hasAttribute()
+    {
+        $additionValues = $this->get('addition_values');
+        if (isset($additionValues[Configure::read('Setting.formItemAdditionValues.attribute')])) {
+            return true;
+        }
+
+        return false;
     }
 }

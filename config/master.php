@@ -619,6 +619,7 @@ return [
                 AdminOperationalLog::TYPE_RECEPTION_STATUS_WORD_EDIT => '受付ステータス文言設定編集',
                 AdminOperationalLog::TYPE_AKERUN => 'Akerun設定',
                 AdminOperationalLog::TYPE_UNLOCK => 'ロック解除',
+                AdminOperationalLog::TYPE_APPROVAL => '承認',
             ],
             'typeCode' => [
                 'add' => AdminOperationalLog::TYPE_ADD,
@@ -645,6 +646,7 @@ return [
                 'receptionStatusWordEdit' => AdminOperationalLog::TYPE_RECEPTION_STATUS_WORD_EDIT,
                 'akerun' => AdminOperationalLog::TYPE_AKERUN,
                 'unlock' => AdminOperationalLog::TYPE_UNLOCK,
+                'approval' => AdminOperationalLog::TYPE_APPROVAL,
             ],
         ],
         //会員権限

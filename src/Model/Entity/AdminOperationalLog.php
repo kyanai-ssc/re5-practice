@@ -85,6 +85,7 @@ class AdminOperationalLog extends AppEntity
     public const TYPE_RECEPTION_STATUS_WORD_EDIT = 21;
     public const TYPE_AKERUN = 22;
     public const TYPE_UNLOCK = 23;
+    public const TYPE_APPROVAL = 24;
 
     /**
      * 特殊操作ログ：全予約枠休日設定

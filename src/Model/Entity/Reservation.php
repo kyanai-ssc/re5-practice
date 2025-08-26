@@ -360,6 +360,22 @@ class Reservation extends AppEntity
                 }
             }
 
+            //料金係数を予約枠の料金にかける
+            /** @var \App\Model\Table\UsersTable $usersTable */
+            $usersTable = $this->fetchTable('Users');
+
+            /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
+            $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+
+            $user = $usersTable->get($this->get('user_id'));
+            $user_authority_id = $user->get('user_authority_id');
+            $userAuthority = $userAuthoritiesTable->get($user_authority_id);
+            $chargeMultiplier = $userAuthority->get('charge_multiplier');
+
+            if ($chargeMultiplier !== null) {
+                $eventTotalCharge = bcmul((string)(float)$eventTotalCharge, (string)(float)$chargeMultiplier, 0);
+            }
+
             $this->chargeBreakdown = [
                 'breakdown' => $breakdown,
                 'charge' => (int)($eventTotalCharge + $optionTotalCharge),

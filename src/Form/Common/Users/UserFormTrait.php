@@ -6,6 +6,7 @@ namespace App\Form\Common\Users;
 use App\Model\Entity\FormItem;
 use App\Model\Entity\User;
 use App\Model\InputType\Item\Type\InputInterface;
+use Cake\Core\Configure;
 use Cake\Core\Exception\CakeException;
 use Cake\Form\Schema;
 use Cake\Utility\Hash;
@@ -281,6 +282,16 @@ trait UserFormTrait
         $userInputs = [];
         if (isset($data['users']) && is_array($data['users'])) {
             $userInputs = $data['users'];
+        }
+
+        if (
+            !isset($userInputs['addition_values'][Configure::read(
+                'Setting.formItemAdditionValues.repeatReservationFlg'
+            )])
+        ) {
+            $userInputs['addition_values'][Configure::read(
+                'Setting.formItemAdditionValues.repeatReservationFlg'
+            )] = Configure::read('Master.common.flg.off');
         }
 
         $entityOptions = array_merge([

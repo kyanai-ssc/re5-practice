@@ -24,6 +24,7 @@ use App\Utility\ArrayUtility;
  * @property int $default_flg
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
+ * @property int|null $charge_multiplier
  *
  * @property \App\Model\Entity\FormPattern $form_pattern
  * @property \App\Model\Entity\FormItem $form_item
@@ -59,6 +60,11 @@ class UserAuthority extends AppEntity
     public const SELECT_ALL = -1;
 
     /**
+     * デフォルト権限：ログイン
+     */
+    public const DEFAULT_AUTHORITY = 2;
+
+    /**
      * @inheritDoc
      */
     protected $_accessible = [
@@ -81,6 +87,7 @@ class UserAuthority extends AppEntity
         'auto_reply_mails' => false,
         'news_authorities' => false,
         'users' => false,
+        'charge_multiplier' => true,
     ];
 
     /**

@@ -1620,6 +1620,7 @@ class UsersTable extends AppTable implements ImportableTableInterface
                     'reservation_limit_future',
                     'reservation_limit_month',
                     'reservation_limit_day',
+                    'charge_multiplier',
                 ],
             ],
         ]);
