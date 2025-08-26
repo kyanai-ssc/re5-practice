@@ -607,13 +607,17 @@ class UserAuthoritiesTable extends AppTable
      * 属性と同じ名前の権限名のデータを取得
      *
      * @param string $name 属性名
-     * @return \App\Model\Entity\UserAuthority|null
+     * @return \Cake\Datasource\EntityInterface|null
      */
     public function getSameNameAuthority($name)
     {
-        $userAuthority = $this->userAuthorities->find()
+        $userAuthority = $this->find()
             ->where(['name' => $name])
             ->first();
+
+        if (is_array($userAuthority) || $userAuthority === null) {
+            return null;
+        }
 
         return $userAuthority;
     }

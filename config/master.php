@@ -1882,6 +1882,7 @@ return [
                     'Users_sample',
                     'Users_downloadChecked',
                     'Users_withdraw',
+                    'Users_approval',
                 ],
             ],
         ],

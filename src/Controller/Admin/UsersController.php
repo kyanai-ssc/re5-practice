@@ -336,15 +336,15 @@ class UsersController extends AdminAppController
         $deleteOptions = [
             'saveOperation' => $this->getRequest()->getAttribute('params'),
         ];
-        if (!$usersTable->delete($user, $deleteOptions)) {
-            $errors = $user->getErrors();
-            if (!empty($errors)) {
-                $errors = Hash::flatten($errors);
-                throw new BadRequestException(reset($errors));
-            } else {
-                throw new BadRequestException();
-            }
-        }
+        // if (!$usersTable->delete($user, $deleteOptions)) {
+        //     $errors = $user->getErrors();
+        //     if (!empty($errors)) {
+        //         $errors = Hash::flatten($errors);
+        //         throw new BadRequestException(reset($errors));
+        //     } else {
+        //         throw new BadRequestException();
+        //     }
+        // }
         $this->Flash->set((string)__(Message::DELETE_SUCCESS), [
             'key' => 'usersFinish',
             'element' => 'success',
@@ -548,15 +548,17 @@ class UsersController extends AdminAppController
         // 顧客に登録されている属性と同じ名前の権限名の顧客の権限データを取得
         $userAuthority = $userAuthoritiesTable->getSameNameAuthority($attributeName);
 
-        if ($userAuthority == null) {
+        if ($userAuthority === null) {
             $this->Flash->set((string)__(Message::NO_EXIST_ATTRIBUTE_AUTHORITY_NAME), [
             'key' => 'usersErrors',
-            'element' => 'errors',
+            'element' => 'error',
             ]);
         }
 
-        // 取得した権限を会員の権限に書き換える
-        $usersTable->updateAuthority($user, (int)$userAuthority['id']);
+        if ($userAuthority !== null) {
+            // 取得した権限を会員の権限に書き換える
+            $usersTable->updateAuthority($user, (int)$userAuthority['id']);
+        }
 
         return $this->redirect([
             'prefix' => 'Admin',

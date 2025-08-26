@@ -341,7 +341,7 @@ return function (RouteBuilder $routes): void {
             ->setPatterns(['id' => '\\d{1,18}']);
 
         //属性承認
-       $builder
+        $builder
             ->connect('/users/approval/{id}', [
                 'controller' => 'Users',
                 'action' => 'approval',
