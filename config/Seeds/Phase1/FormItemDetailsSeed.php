@@ -37,6 +37,7 @@ class FormItemDetailsSeed extends AbstractSeed
 
          $csvFile = __DIR__ . DS . 'csv' . DS . static::TABLE_NAME . '.csv';
         $data = $this->readCsv($csvFile, static::TABLE_COLUMNS);
+
         $table = $this->table(static::TABLE_NAME);
         $table->insert($data)->save();
         $this->setSequence(static::TABLE_NAME);
