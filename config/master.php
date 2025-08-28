@@ -1882,8 +1882,11 @@ return [
                     'Users_sample',
                     'Users_downloadChecked',
                     'Users_withdraw',
-                    'Users_approval',
                 ],
+                //会員登録利用
+                'Users_add' => [
+                    'Users_approval',
+                ]
             ],
         ],
         'api' => [

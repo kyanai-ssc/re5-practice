@@ -33,9 +33,9 @@ class FormItemDetailsSeed extends AbstractSeed
      */
     public function run(): void
     {
-         $this->checkClient();
+        $this->checkClient();
 
-         $csvFile = __DIR__ . DS . 'csv' . DS . static::TABLE_NAME . '.csv';
+        $csvFile = __DIR__ . DS . 'csv' . DS . static::TABLE_NAME . '.csv';
         $data = $this->readCsv($csvFile, static::TABLE_COLUMNS);
 
         $table = $this->table(static::TABLE_NAME);

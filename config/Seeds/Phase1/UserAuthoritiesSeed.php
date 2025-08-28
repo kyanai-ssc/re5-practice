@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use App\Command\Seed\AbstractSeed;
+use App\Model\Entity\UserAuthority;
 
 /**
  * UserAuthoritiesSeed class.
@@ -26,6 +27,10 @@ class UserAuthoritiesSeed extends AbstractSeed
         'guest_flg',
         'default_flg',
     ];
+    protected const UPDATE_DATA = [
+        'calendar_type' => [2,4,8],
+        'calendar_type_default' => 4,
+    ];
 
     /**
      * @inheritDoc
@@ -40,5 +45,11 @@ class UserAuthoritiesSeed extends AbstractSeed
         $table = $this->table(static::TABLE_NAME);
         $table->insert($data)->save();
         $this->setSequence(static::TABLE_NAME);
+
+        $query = $this->getAdapter()->getQueryBuilder();
+        $query->update(static::TABLE_NAME);
+        $query->set(static::UPDATE_DATA);
+        $query->where(['id' => UserAuthority::USER_AUTHORITY_ID_LOGIN]);
+        $query->execute();
     }
 }

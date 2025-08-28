@@ -9,6 +9,7 @@ use App\Form\Admin\Users\DeleteManyForm;
 use App\Form\Admin\Users\SearchForm;
 use App\Form\Admin\Users\UserForm;
 use App\Locale\Message;
+use App\Model\Entity\UserAuthority;
 use App\Utility\ArrayUtility;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
@@ -336,15 +337,15 @@ class UsersController extends AdminAppController
         $deleteOptions = [
             'saveOperation' => $this->getRequest()->getAttribute('params'),
         ];
-        // if (!$usersTable->delete($user, $deleteOptions)) {
-        //     $errors = $user->getErrors();
-        //     if (!empty($errors)) {
-        //         $errors = Hash::flatten($errors);
-        //         throw new BadRequestException(reset($errors));
-        //     } else {
-        //         throw new BadRequestException();
-        //     }
-        // }
+        if (!$usersTable->delete($user, $deleteOptions)) {
+            $errors = $user->getErrors();
+            if (!empty($errors)) {
+                $errors = Hash::flatten($errors);
+                throw new BadRequestException(reset($errors));
+            } else {
+                throw new BadRequestException();
+            }
+        }
         $this->Flash->set((string)__(Message::DELETE_SUCCESS), [
             'key' => 'usersFinish',
             'element' => 'success',
@@ -521,7 +522,7 @@ class UsersController extends AdminAppController
      * @param int $id 会員ID
      * @return \Cake\Http\Response|null|void
      */
-    public function approval($id = null)//TODO
+    public function approval($id = null)
     {
         $this->getRequest()->allowMethod('post');
 
@@ -532,32 +533,26 @@ class UsersController extends AdminAppController
             'finder' => 'edit',
         ]);
 
-        // 顧客に登録されている属性を取得
-        $additionValues = $user->get('addition_values');
-        $attributeId = $additionValues[Configure::read('Setting.formItemAdditionValues.attribute')]; //属性の番号
+        $saveOptions = [
+            'saveOperation' => $this->getRequest()->getAttribute('params'),
+        ];
 
-        /** @var \App\Model\Table\FormItemChoicesTable $formItemChoicesTable */
-        $formItemChoicesTable = $this->fetchTable('FormItemChoices');
+        if (!($user->hasAttribute() && $user->get('user_authority_id') === UserAuthority::USER_AUTHORITY_ID_LOGIN)) {
+            throw new NotFoundException();
+        }
 
-        $attribute = $formItemChoicesTable->get($attributeId);
-        $attributeName = $attribute->name;
+        $result = $usersTable->updateAuthorityForApproval($user, $saveOptions);
 
-        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
-        $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
-
-        // 顧客に登録されている属性と同じ名前の権限名の顧客の権限データを取得
-        $userAuthority = $userAuthoritiesTable->getSameNameAuthority($attributeName);
-
-        if ($userAuthority === null) {
-            $this->Flash->set((string)__(Message::NO_EXIST_ATTRIBUTE_AUTHORITY_NAME), [
+        if ($result) {
+            $this->Flash->set((string)__(Message::UPDATE_SUCCESS), [
+            'key' => 'usersFinish',
+            'element' => 'success',
+            ]);
+        } else {
+            $this->Flash->set((string)__(Message::ERROR_USER_ERROR), [
             'key' => 'usersErrors',
             'element' => 'error',
             ]);
-        }
-
-        if ($userAuthority !== null) {
-            // 取得した権限を会員の権限に書き換える
-            $usersTable->updateAuthority($user, (int)$userAuthority['id']);
         }
 
         return $this->redirect([

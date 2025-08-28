@@ -60,9 +60,9 @@ class UserAuthority extends AppEntity
     public const SELECT_ALL = -1;
 
     /**
-     * デフォルト権限：ログイン
+     * ID：ログイン
      */
-    public const DEFAULT_AUTHORITY = 2;
+    public const USER_AUTHORITY_ID_LOGIN = 2;
 
     /**
      * @inheritDoc

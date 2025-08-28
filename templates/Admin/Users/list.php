@@ -241,9 +241,9 @@ if ($selectUser) {
                                                 <?= $this->Authority->isAuthority($deleteBtn, 'Users', 'delete'); ?>
                                             </li>
                                         <?php endif; ?>
-                                        <?php if($user->hasAttribute() && $user->get('user_authority_id') === UserAuthority::DEFAULT_AUTHORITY): ?>
+                                        <?php if($user->hasAttribute() && $user->get('user_authority_id') === UserAuthority::USER_AUTHORITY_ID_LOGIN): ?>
                                             <li>
-                                                <?= $this->Form->button('<svg class="icon"><use xlink:href="#icon_check"/></svg>', [
+                                                <?php $approvalBtn =  $this->Form->button('<svg class="icon"><use xlink:href="#icon_check"/></svg>', [
                                                     'type' => 'button',
                                                     'class' => ['js_post_confirm', 'btn-tool', 'is-approval'],
                                                     'title' => '承認',
@@ -257,6 +257,7 @@ if ($selectUser) {
                                                     ], ['escape' => false]),
                                                     'escapeTitle' => false,
                                                 ]) ?>
+                                                <?= $this->Authority->isAuthority($approvalBtn, 'Users', 'approval'); ?>
                                             </li>
                                         <?php endif; ?>
                                     <?php else: ?>

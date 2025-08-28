@@ -54,6 +54,7 @@ class Reservation extends AppEntity
 
     public const CALCULATE_CHARGE_OFF = 0;
     public const CALCULATE_CHARGE_ON = 1;
+    public const NO_CHARGE_MULTIPLIER = 1;
 
     /**
      * @inheritDoc
@@ -262,12 +263,30 @@ class Reservation extends AppEntity
             $usageDay = $this->get('usage_day');
             $reservationNumber = $this->get('number');
 
+            /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
+            $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+
+            $chargeMultiplier = null;
+            $user = $this->getUserEntity();
+
+            if ($user !== null) {
+                // 料金係数を取得
+                $userAuthority = $userAuthoritiesTable->get($user->get('user_authority_id'));
+                $chargeMultiplier = $userAuthority->get('charge_multiplier');
+            }
+
+            if ($chargeMultiplier === null) {
+                $chargeMultiplier = static::NO_CHARGE_MULTIPLIER;
+            }
+
             // 予約枠の料金
             $eventTotalCharge = 0;
             $timePlan = $event->get('time_plan');
             if (((string)$timePlan) === ((string)Event::PLAN_SINGLE)) {
                 $unitNumber = (int)ceil($usageTime / $event->get('event_unit_time'));
                 $eventDayCharge = $event->get('charge') * $unitNumber * $usageDay;
+                // 料金係数をかける
+                $eventDayCharge = bcmul((string)(float)$eventDayCharge, (string)(float)$chargeMultiplier, 0);
                 $eventCharge = $eventDayCharge * $reservationNumber;
                 $eventTotalCharge += $eventCharge;
 
@@ -297,6 +316,8 @@ class Reservation extends AppEntity
                 foreach ($event->get('event_plans') as $eventPlan) {
                     if (isset($eventPlanIds[$eventPlan->get('id')])) {
                         $planUnitCharge = $eventPlan->get('charge');
+                        // 料金係数をかける
+                        $planUnitCharge = bcmul((string)(float)$planUnitCharge, (string)(float)$chargeMultiplier, 0);
                         $planCharge = $planUnitCharge * $reservationNumber;
                         $eventTotalCharge += $planCharge;
 
@@ -358,22 +379,6 @@ class Reservation extends AppEntity
                         ];
                     }
                 }
-            }
-
-            //料金係数を予約枠の料金にかける
-            /** @var \App\Model\Table\UsersTable $usersTable */
-            $usersTable = $this->fetchTable('Users');
-
-            /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
-            $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
-
-            $user = $usersTable->get($this->get('user_id'));
-            $user_authority_id = $user->get('user_authority_id');
-            $userAuthority = $userAuthoritiesTable->get($user_authority_id);
-            $chargeMultiplier = $userAuthority->get('charge_multiplier');
-
-            if ($chargeMultiplier !== null) {
-                $eventTotalCharge = bcmul((string)(float)$eventTotalCharge, (string)(float)$chargeMultiplier, 0);
             }
 
             $this->chargeBreakdown = [
