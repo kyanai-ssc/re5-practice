@@ -10,8 +10,8 @@ use App\Model\Entity\AutoReplyMail;
 use App\Model\Entity\AutoReplyMailHistory;
 use App\Model\Entity\FormGroup;
 use App\Model\Entity\FormItem;
+use App\Model\Entity\FormItemChoice;
 use App\Model\Entity\User;
-use App\Model\Entity\UserAddition;
 use App\Model\Entity\UserSmartLock;
 use App\Model\ImportableTableInterface;
 use App\Model\InputType\Item\Type\AdditionTypeInterface;
@@ -977,44 +977,22 @@ class UsersTable extends AppTable implements ImportableTableInterface
         $userLoginHistoriesTable = $this->getTableLocator()->get('UserLoginHistories');
         /** @var \App\Model\Table\FormPatternDisplayTypesTable $formPatternDisplayTypesTable */
         $formPatternDisplayTypesTable = $this->getTableLocator()->get('FormPatternDisplayTypes');
-        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
-        $userAuthoritiesTable = $this->getTableLocator()->get('UserAuthorities');
 
         if (!($entity instanceof User)) {
             throw new CakeException();
         }
 
-        //繰り返し予約フラグの表示パターンを取得
-        $userAuthorityId = $entity->get('user_authority_id');
-
-        $userAuthority = $userAuthoritiesTable->find()
-            ->select(['form_pattern_id'])
-            ->where(['id' => $userAuthorityId])
-            ->enableHydration(true)
-            ->firstOrFail();
-        /** @var \App\Model\Entity\UserAuthority $userAuthority */
-        $formPatternId = $userAuthority->get('form_pattern_id');
-
-        $formPatternDisplayType = $formPatternDisplayTypesTable->find()
-            ->select(['display_type'])
-            ->where(['form_pattern_id' => $formPatternId,
-                'form_item_id' => FormItem::FORM_ITEMS_ID_REPEAT_RESERVATION_FLG,
-            ])
-            ->enableHydration(true)
-            ->firstOrFail();
-        /** @var \App\Model\Entity\FormPatternDisplayType $formPatternDisplayType*/
-        $displayType = $formPatternDisplayType->get('display_type');
-
         // 公開側から会員登録で「繰り返し予約フラグ」の表示パターンが「③表示する：管理画面のみ」場合、不可で登録
         if (
             $entity->isNew()
             && !($this->commonData()->existsAdminLoginData())
-            && $displayType === static::ONLY_ADMIN_DISPLAY_TYPE
         ) {
-            $item = $entity->addition_values ?? [];
-            $item[Configure::readOrFail('Setting.formItemAdditionValues.repeatReservationFlg')]
-                = UserAddition::REPEAT_RESERVATION_FLG_OFF;
-            $entity->set('addition_values', $item);
+            $formPatternDisplayTypes = $formPatternDisplayTypesTable->find('formCreating')->toArray();
+            $displayType = $formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG]->get('display_type');
+
+            if ($displayType === static::ONLY_ADMIN_DISPLAY_TYPE) {
+                $entity->set('addition_values', $this->createRepeatReservationFlgData($entity));
+            }
         }
 
         // ログイン履歴の生成
@@ -2038,22 +2016,6 @@ class UsersTable extends AppTable implements ImportableTableInterface
     }
 
     /**
-     * 権限を更新し、処理が正常に行われたか判定
-     *
-     * @param \Cake\Datasource\EntityInterface $user 会員
-     * @param int $userAuthorityId 権限
-     * @param array|null $saveOperation 操作ログ
-     * @return \App\Model\Entity\User|false
-     */
-    public function isUpdateAuthority(EntityInterface $user, int $userAuthorityId, ?array $saveOperation = null)
-    {
-        $user->clean();
-        $user->set('user_authority_id', $userAuthorityId);
-
-        return $this->save($user, $saveOperation);
-    }
-
-    /**
      * 承認によってユーザーの権限を更新
      *
      * @param \App\Model\Entity\User $user 会員
@@ -2073,7 +2035,7 @@ class UsersTable extends AppTable implements ImportableTableInterface
         // 顧客に登録されている属性を取得
         $userAdditions = $user->get('user_additions');
         foreach ($userAdditions as $userAddition) {
-            if ($userAddition->form_item_id === formItem::FORM_ITEMS_ID_ATTRIBUTE) {
+            if ($userAddition->form_item_id === formItem::ID_ATTRIBUTE) {
                 $attributeId = $userAddition->value;
                 break;
             }
@@ -2091,6 +2053,24 @@ class UsersTable extends AppTable implements ImportableTableInterface
         }
 
         // 取得した権限を会員の権限に書き換える
-        return $this->isUpdateAuthority($user, (int)$userAuthority['id'], $saveOptions);
+        $user->clean();
+        $user->set('user_authority_id', (int)$userAuthority['id']);
+
+        return $this->save($user, $saveOptions);
+    }
+
+    /**
+     * 繰り返し予約フラグのデータを生成
+     *
+     * @param \App\Model\Entity\User $entity 会員
+     * @return array 初期登録データ
+     */
+    public function createRepeatReservationFlgData($entity)
+    {
+        $item = $entity->addition_values ?? [];
+        $item[Configure::readOrFail('Setting.formItemAdditionValues.repeatReservationFlg')]
+            = FormItemChoice::REPEAT_RESERVATION_FLG_OFF;
+
+        return $item;
     }
 }

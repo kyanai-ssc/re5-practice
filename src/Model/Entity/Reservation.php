@@ -286,7 +286,8 @@ class Reservation extends AppEntity
                 $unitNumber = (int)ceil($usageTime / $event->get('event_unit_time'));
                 $eventDayCharge = $event->get('charge') * $unitNumber * $usageDay;
                 // 料金係数をかける
-                $eventDayCharge = bcmul((string)(float)$eventDayCharge, (string)(float)$chargeMultiplier, 0);
+                /** @var numeric-string  $chargeMultiplier*/
+                $eventDayCharge = bcmul((string)$eventDayCharge, (string)$chargeMultiplier);
                 $eventCharge = $eventDayCharge * $reservationNumber;
                 $eventTotalCharge += $eventCharge;
 
@@ -315,9 +316,11 @@ class Reservation extends AppEntity
                 $planBreakdown = null;
                 foreach ($event->get('event_plans') as $eventPlan) {
                     if (isset($eventPlanIds[$eventPlan->get('id')])) {
-                        $planUnitCharge = $eventPlan->get('charge');
+                        /** @var numeric-string  $planUnitCharge*/
+                        $planUnitCharge = (string)$eventPlan->get('charge');
                         // 料金係数をかける
-                        $planUnitCharge = bcmul((string)(float)$planUnitCharge, (string)(float)$chargeMultiplier, 0);
+                        /** @var numeric-string  $chargeMultiplier*/
+                        $planUnitCharge = bcmul($planUnitCharge, (string)$chargeMultiplier);
                         $planCharge = $planUnitCharge * $reservationNumber;
                         $eventTotalCharge += $planCharge;
 

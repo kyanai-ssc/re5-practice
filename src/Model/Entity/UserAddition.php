@@ -24,11 +24,6 @@ class UserAddition extends AppEntity
     use AdditionTrait;
 
     /**
-     * 繰り返し予約フラグ：不可
-     */
-    public const REPEAT_RESERVATION_FLG_OFF = '1';
-
-    /**
      * @inheritDoc
      */
     protected $_accessible = [

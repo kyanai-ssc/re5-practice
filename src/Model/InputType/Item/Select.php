@@ -21,7 +21,7 @@ class Select extends Radio
         $userId = $this->getConfig('userId');
 
         if (
-            !$this->isAdmin() && isset($userId) && $formPatternDisplayType['id'] === formItem::FORM_ITEMS_ID_ATTRIBUTE
+            !$this->isAdmin() && isset($userId) && $formPatternDisplayType['id'] === FormItem::ID_ATTRIBUTE
         ) {
             $this->displayType['canInput'] = false;
         }

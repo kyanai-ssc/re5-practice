@@ -459,7 +459,7 @@ class User extends AppEntity
         $userAdditions = $this->get('user_additions');
 
         foreach ($userAdditions as $userAddition) {
-            if ($userAddition->form_item_id === FormItem::FORM_ITEMS_ID_ATTRIBUTE) {
+            if ($userAddition->form_item_id === FormItem::ID_ATTRIBUTE) {
                 return true;
             }
         }

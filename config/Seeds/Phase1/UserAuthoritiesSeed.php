@@ -28,7 +28,7 @@ class UserAuthoritiesSeed extends AbstractSeed
         'default_flg',
     ];
     protected const UPDATE_DATA = [
-        'calendar_type' => [2,4,8],
+        'calendar_type' => [2, 4, 8],
         'calendar_type_default' => 4,
     ];
 

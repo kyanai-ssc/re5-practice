@@ -378,14 +378,14 @@ class FormItem extends AppEntity
      *
      * @var int
      */
-    public const FORM_ITEMS_ID_REPEAT_RESERVATION_FLG = 34;
+    public const ID_REPEAT_RESERVATION_FLG = 34;
 
     /**
      * ID : 属性
      *
      * @var int
      */
-    public const FORM_ITEMS_ID_ATTRIBUTE = 35;
+    public const ID_ATTRIBUTE = 35;
 
     /**
      * @inheritDoc
@@ -488,7 +488,7 @@ class FormItem extends AppEntity
             return false;
         }
 
-        if ($this->id === FormItem::FORM_ITEMS_ID_ATTRIBUTE) {
+        if ($this->id === FormItem::ID_ATTRIBUTE) {
             return false;
         }
 
