@@ -854,9 +854,5 @@ return [
                 'time' => 10,
             ],
         ],
-        'formItemAdditionValues' => [
-            'repeatReservationFlg' => 'item_34',
-            'attribute' => 'item_35',
-        ]
     ],
 ];

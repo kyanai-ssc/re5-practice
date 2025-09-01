@@ -992,7 +992,11 @@ class UsersTable extends AppTable implements ImportableTableInterface
                     'user_authority_id' => $entity->get('user_authority_id'),
                 ],
             ])->toArray();
-            $displayType = $formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG]->get('display_type');
+
+            $displayType = null;
+            if (isset($formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG])) {
+                $displayType = $formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG]->get('display_type');
+            }
 
             if ($displayType === static::ONLY_ADMIN_DISPLAY_TYPE) {
                 $this->createAndSetRepeatReservationFlgData($entity);
@@ -2076,11 +2080,10 @@ class UsersTable extends AppTable implements ImportableTableInterface
 
         $newAdditions = $userAdditionsTable->newEntity([
             'form_item_id' => FormItem::ID_REPEAT_RESERVATION_FLG,
-            'value' => FormItemChoice::REPEAT_RESERVATION_FLG_OFF,
             'data' => FormItemChoice::REPEAT_RESERVATION_FLG_OFF,
-        ]);
+        ], ['validate' => false]);
 
-        $existEntity = (array)$entity->get('user_additions');
+        $existEntity = $entity->get('user_additions');
         $existEntity[] = $newAdditions;
 
         $entity->set('user_additions', $existEntity);
