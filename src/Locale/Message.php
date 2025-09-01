@@ -815,4 +815,14 @@ class Message
      * Akerun registered_mailエラー(予約)
      */
     public const ERROR_AKERUN_REGISTERED_MAIL_RESERVATION = 'ERROR_AKERUN_REGISTERED_MAIL_RESERVATION';
+
+    /**
+     * 半角数字記号（ドット）
+     */
+    public const ERROR_HALF_SIZE_DECIMAL_NUMBER = 'ERROR_HALF_SIZE_DECIMAL_NUMBER';
+
+    /**
+     * フラッシュメッセージ：属性・権限不一致エラー
+     */
+    public const NO_EXIST_ATTRIBUTE_AUTHORITY_NAME = 'NO_EXIST_ATTRIBUTE_AUTHORITY_NAME';
 }

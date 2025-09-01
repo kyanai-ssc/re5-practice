@@ -9,6 +9,8 @@ use App\Model\Entity\AdminSearchItem;
 use App\Model\Entity\AutoReplyMail;
 use App\Model\Entity\AutoReplyMailHistory;
 use App\Model\Entity\FormGroup;
+use App\Model\Entity\FormItem;
+use App\Model\Entity\FormItemChoice;
 use App\Model\Entity\User;
 use App\Model\Entity\UserSmartLock;
 use App\Model\ImportableTableInterface;
@@ -23,6 +25,7 @@ use Cake\Datasource\EntityInterface;
 use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Datasource\Paging\NumericPaginator;
 use Cake\Event\EventInterface;
+use Cake\Http\Exception\BadRequestException;
 use Cake\I18n\FrozenDate;
 use Cake\ORM\Query;
 use Cake\ORM\RulesChecker;
@@ -53,6 +56,8 @@ class UsersTable extends AppTable implements ImportableTableInterface
      * CSV出力時の1回の取得件数
      */
     public const CSV_PAGEVIEW = 5000;
+
+    public const ONLY_ADMIN_DISPLAY_TYPE = 3;
 
     /**
      * @inheritDoc
@@ -970,9 +975,32 @@ class UsersTable extends AppTable implements ImportableTableInterface
         $autoReplyMailHistoriesTable = $this->getTableLocator()->get('AutoReplyMailHistories');
         /** @var \App\Model\Table\UserLoginHistoriesTable $userLoginHistoriesTable */
         $userLoginHistoriesTable = $this->getTableLocator()->get('UserLoginHistories');
+        /** @var \App\Model\Table\FormPatternDisplayTypesTable $formPatternDisplayTypesTable */
+        $formPatternDisplayTypesTable = $this->getTableLocator()->get('FormPatternDisplayTypes');
 
         if (!($entity instanceof User)) {
             throw new CakeException();
+        }
+
+        // 公開側から会員登録で「繰り返し予約フラグ」の表示パターンが「③表示する：管理画面のみ」場合、不可で登録
+        if (
+            $entity->isNew()
+            && !($this->commonData()->existsAdminLoginData())
+        ) {
+            $formPatternDisplayTypes = $formPatternDisplayTypesTable->find('formCreating', [
+                'inputs' => [
+                    'user_authority_id' => $entity->get('user_authority_id'),
+                ],
+            ])->toArray();
+
+            $displayType = null;
+            if (isset($formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG])) {
+                $displayType = $formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG]->get('display_type');
+            }
+
+            if ($displayType === static::ONLY_ADMIN_DISPLAY_TYPE) {
+                $this->createAndSetRepeatReservationFlgData($entity);
+            }
         }
 
         // ログイン履歴の生成
@@ -1620,6 +1648,7 @@ class UsersTable extends AppTable implements ImportableTableInterface
                     'reservation_limit_future',
                     'reservation_limit_month',
                     'reservation_limit_day',
+                    'charge_multiplier',
                 ],
             ],
         ]);
@@ -1992,5 +2021,71 @@ class UsersTable extends AppTable implements ImportableTableInterface
         }
 
         return true;
+    }
+
+    /**
+     * 承認によってユーザーの権限を更新
+     *
+     * @param \App\Model\Entity\User $user 会員
+     * @param array $saveOptions 操作ログ
+     * @return \App\Model\Entity\User|false
+     */
+    public function updateAuthorityForApproval($user, $saveOptions = null)
+    {
+        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
+        $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+        /** @var \App\Model\Table\FormItemChoicesTable $formItemChoicesTable */
+        $formItemChoicesTable = $this->fetchTable('FormItemChoices');
+
+        $attributeId = null;
+        $userAuthority = null;
+
+        // 顧客に登録されている属性を取得
+        $userAdditions = $user->get('user_additions');
+        foreach ($userAdditions as $userAddition) {
+            if ($userAddition->form_item_id === formItem::ID_ATTRIBUTE) {
+                $attributeId = $userAddition->value;
+                break;
+            }
+        }
+        if ($attributeId !== null) {
+            $attribute = $formItemChoicesTable->get($attributeId);
+            $attributeName = $attribute->name;
+
+            // 顧客に登録されている属性と同じ名前の権限名の顧客の権限データを取得
+            $userAuthority = $userAuthoritiesTable->getSameNameAuthority($attributeName);
+        }
+
+        if ($userAuthority === null) {
+            throw new BadRequestException(Message::NO_EXIST_ATTRIBUTE_AUTHORITY_NAME);
+        }
+
+        // 取得した権限を会員の権限に書き換える
+        $user->clean();
+        $user->set('user_authority_id', (int)$userAuthority['id']);
+
+        return $this->save($user, $saveOptions);
+    }
+
+    /**
+     * 繰り返し予約フラグのデータを生成しセットする
+     *
+     * @param \App\Model\Entity\User $entity 会員
+     * @return void
+     */
+    public function createAndSetRepeatReservationFlgData($entity)
+    {
+        /** @var \App\Model\Table\UserAdditionsTable $userAdditionsTable */
+        $userAdditionsTable = $this->fetchTable('UserAdditions');
+
+        $newAdditions = $userAdditionsTable->newEntity([
+            'form_item_id' => FormItem::ID_REPEAT_RESERVATION_FLG,
+            'data' => FormItemChoice::REPEAT_RESERVATION_FLG_OFF,
+        ], ['validate' => false]);
+
+        $existEntity = $entity->get('user_additions');
+        $existEntity[] = $newAdditions;
+
+        $entity->set('user_additions', $existEntity);
     }
 }

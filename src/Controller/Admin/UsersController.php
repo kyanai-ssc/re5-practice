@@ -9,6 +9,7 @@ use App\Form\Admin\Users\DeleteManyForm;
 use App\Form\Admin\Users\SearchForm;
 use App\Form\Admin\Users\UserForm;
 use App\Locale\Message;
+use App\Model\Entity\UserAuthority;
 use App\Utility\ArrayUtility;
 use Cake\Core\Configure;
 use Cake\Event\EventInterface;
@@ -39,6 +40,7 @@ class UsersController extends AdminAppController
             'delete',
             'download',
             'sample',
+            'approval',
         ]);
 
         return $response;
@@ -512,5 +514,52 @@ class UsersController extends AdminAppController
             $filePath,
             true
         );
+    }
+
+    /**
+     * approval method
+     *
+     * @param int $id 会員ID
+     * @return \Cake\Http\Response|null|void
+     */
+    public function approval($id = null)
+    {
+        $this->getRequest()->allowMethod('post');
+
+        /** @var \App\Model\Table\UsersTable $usersTable */
+        $usersTable = $this->fetchTable('Users');
+
+        $user = $usersTable->get($id, [
+            'finder' => 'edit',
+        ]);
+
+        $saveOptions = [
+            'saveOperation' => $this->getRequest()->getAttribute('params'),
+        ];
+
+        if (!($user->hasAttribute() && $user->get('user_authority_id') === UserAuthority::USER_AUTHORITY_ID_LOGIN)) {
+            throw new NotFoundException();
+        }
+
+        $result = $usersTable->updateAuthorityForApproval($user, $saveOptions);
+
+        if ($result) {
+            $this->Flash->set((string)__(Message::UPDATE_SUCCESS), [
+            'key' => 'usersFinish',
+            'element' => 'success',
+            ]);
+        } else {
+            $this->Flash->set((string)__(Message::ERROR_USER_ERROR), [
+            'key' => 'usersErrors',
+            'element' => 'error',
+            ]);
+        }
+
+        return $this->redirect([
+            'prefix' => 'Admin',
+            'controller' => 'Users',
+            'action' => 'list',
+            '?' => Configure::read('Setting.searchInput.searchQuery'),
+        ]);
     }
 }

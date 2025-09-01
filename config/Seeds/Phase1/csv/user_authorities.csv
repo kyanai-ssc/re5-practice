@@ -1,0 +1,5 @@
+id,name,access,form_pattern_id,calendar_type,calendar_type_default,login_name_form_item_id,reservation_limit_all,reservation_limit_future,reservation_limit_month,reservation_limit_day,guest_flg,default_flg
+3,市内（減免なし）,"[""All__all""]",1,"[2,4,8]",4,22,,,,,0,1
+4,市内（減免あり）,"[""All__all""]",1,"[2,4,8]",4,22,,,,,0,1
+5,市外（減免なし）,"[""All__all""]",1,"[2,4,8]",4,22,,,,,0,1
+6,市外（減免あり）,"[""All__all""]",1,"[2,4,8]",4,22,,,,,0,1

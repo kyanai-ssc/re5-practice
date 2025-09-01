@@ -374,6 +374,20 @@ class FormItem extends AppEntity
     protected $smartLock = null;
 
     /**
+     * ID : 繰り返し予約フラグ
+     *
+     * @var int
+     */
+    public const ID_REPEAT_RESERVATION_FLG = 34;
+
+    /**
+     * ID : 属性
+     *
+     * @var int
+     */
+    public const ID_ATTRIBUTE = 35;
+
+    /**
      * @inheritDoc
      */
     protected $_accessible = [
@@ -471,6 +485,10 @@ class FormItem extends AppEntity
             $this->setSmartLockInstance($smartLock);
         }
         if ($this->isFormItemIdForAkerun()) {
+            return false;
+        }
+
+        if ($this->id === FormItem::ID_ATTRIBUTE) {
             return false;
         }
 

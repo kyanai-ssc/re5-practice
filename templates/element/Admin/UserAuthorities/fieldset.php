@@ -144,6 +144,19 @@
                     <span class="txt mgl-10">回まで</span>
                 </td>
             </tr>
+            <tr class="field-input">
+                <th class="ttl-input">
+                    <div class="ttl-input-wrap">
+                        料金係数<?= $this->Template->isRequire('charge_multiplier') ?>
+                    </div>
+                </th>
+                <td>
+                    <?= $this->Form->control('charge_multiplier', [
+                        'type' => 'text',
+                    ]) ?>
+                    <span class="txt mgl-10">倍</span>
+                </td>
+            </tr>
             </tbody>
         </table>
     </fieldset>

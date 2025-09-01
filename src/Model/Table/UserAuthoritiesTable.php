@@ -41,6 +41,7 @@ class UserAuthoritiesTable extends AppTable
 {
     public const NAME_MAX = 100;
     public const RESERVATION_LIMIT_MAX = 1000000;
+    public const CHARGE_MULTIPLIER_MAX = 3;
 
     /**
      * @var \Cake\Datasource\EntityInterface|null
@@ -312,6 +313,22 @@ class UserAuthoritiesTable extends AppTable
             ->allowEmptyString('reservation_limit_all')
             ->add('reservation_limit_all', $addRule['reservation_limit']);
 
+        $validator
+            ->requirePresence('charge_multiplier', true, __(Message::ERROR_NOT_EMPTY))
+            ->allowEmptyString('charge_multiplier')
+            ->add('charge_multiplier', [
+                'custom' => [
+                    'rule' => ['custom', '/^\d+(\.\d+)?$/'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_HALF_SIZE_DECIMAL_NUMBER),
+                ],
+                'maxLength' => [
+                    'rule' => ['maxLength', static::CHARGE_MULTIPLIER_MAX],
+                    'last' => true,
+                    'message' => __(Message::ERROR_MAX_LENGTH, static::CHARGE_MULTIPLIER_MAX),
+                ],
+            ]);
+
         return $validator;
     }
 
@@ -419,6 +436,7 @@ class UserAuthoritiesTable extends AppTable
             'reservation_limit_future',
             'reservation_limit_month',
             'reservation_limit_day',
+            'charge_multiplier',
         ]);
         $query->where([
             'UserAuthorities.guest_flg' => UserAuthority::GUEST_FLG_ON,
@@ -448,6 +466,7 @@ class UserAuthoritiesTable extends AppTable
             'reservation_limit_future',
             'reservation_limit_month',
             'reservation_limit_day',
+            'charge_multiplier',
         ]);
         $query->where([
             'UserAuthorities.guest_flg' => UserAuthority::GUEST_FLG_OFF,
@@ -526,6 +545,7 @@ class UserAuthoritiesTable extends AppTable
             'reservation_limit_future',
             'reservation_limit_month',
             'reservation_limit_day',
+            'charge_multiplier',
         ]);
 
         return $query;
@@ -581,5 +601,24 @@ class UserAuthoritiesTable extends AppTable
         ]);
 
         return $query;
+    }
+
+    /**
+     * 属性と同じ名前の権限名のデータを取得
+     *
+     * @param string $name 属性名
+     * @return \Cake\Datasource\EntityInterface|null
+     */
+    public function getSameNameAuthority($name)
+    {
+        $userAuthority = $this->find()
+            ->where(['name' => $name])
+            ->first();
+
+        if (is_array($userAuthority) || $userAuthority === null) {
+            return null;
+        }
+
+        return $userAuthority;
     }
 }

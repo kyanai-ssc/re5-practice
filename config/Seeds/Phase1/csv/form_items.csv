@@ -1,0 +1,3 @@
+id,form_group_id,input_type,name,required_flg,reservation_display_flg,description,sort_no,default_flg,smart_lock_type
+34,1,25,繰り返し予約フラグ,1,0,,11,1,
+35,1,26,属性,0,0,,12,0,

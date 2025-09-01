@@ -448,4 +448,22 @@ class User extends AppEntity
 
         return DateTimeUtility::isWithinDate($dateFrom, $dateTo, $expirationDateFrom, $expirationDateTo);
     }
+
+    /**
+     * 属性がセットされているかチェック
+     *
+     * @return bool
+     */
+    public function hasAttribute()
+    {
+        $userAdditions = $this->get('user_additions');
+
+        foreach ($userAdditions as $userAddition) {
+            if ($userAddition->form_item_id === FormItem::ID_ATTRIBUTE) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }
