@@ -987,11 +987,15 @@ class UsersTable extends AppTable implements ImportableTableInterface
             $entity->isNew()
             && !($this->commonData()->existsAdminLoginData())
         ) {
-            $formPatternDisplayTypes = $formPatternDisplayTypesTable->find('formCreating')->toArray();
+            $formPatternDisplayTypes = $formPatternDisplayTypesTable->find('formCreating', [
+                'inputs' => [
+                    'user_authority_id' => $entity->get('user_authority_id'),
+                ],
+            ])->toArray();
             $displayType = $formPatternDisplayTypes[FormItem::ID_REPEAT_RESERVATION_FLG]->get('display_type');
 
             if ($displayType === static::ONLY_ADMIN_DISPLAY_TYPE) {
-                $entity->set('addition_values', $this->createRepeatReservationFlgData($entity));
+                $this->createAndSetRepeatReservationFlgData($entity);
             }
         }
 
@@ -2060,17 +2064,25 @@ class UsersTable extends AppTable implements ImportableTableInterface
     }
 
     /**
-     * 繰り返し予約フラグのデータを生成
+     * 繰り返し予約フラグのデータを生成しセットする
      *
      * @param \App\Model\Entity\User $entity 会員
-     * @return array 初期登録データ
+     * @return void
      */
-    public function createRepeatReservationFlgData($entity)
+    public function createAndSetRepeatReservationFlgData($entity)
     {
-        $item = $entity->addition_values ?? [];
-        $item[Configure::readOrFail('Setting.formItemAdditionValues.repeatReservationFlg')]
-            = FormItemChoice::REPEAT_RESERVATION_FLG_OFF;
+        /** @var \App\Model\Table\UserAdditionsTable $userAdditionsTable */
+        $userAdditionsTable = $this->fetchTable('UserAdditions');
 
-        return $item;
+        $newAdditions = $userAdditionsTable->newEntity([
+            'form_item_id' => FormItem::ID_REPEAT_RESERVATION_FLG,
+            'value' => FormItemChoice::REPEAT_RESERVATION_FLG_OFF,
+            'data' => FormItemChoice::REPEAT_RESERVATION_FLG_OFF,
+        ]);
+
+        $existEntity = (array)$entity->get('user_additions');
+        $existEntity[] = $newAdditions;
+
+        $entity->set('user_additions', $existEntity);
     }
 }
