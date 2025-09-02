@@ -51,6 +51,23 @@
                     ]) ?>
                 </td>
             </tr>
+            <tr class="field-input">
+                <th class="ttl-input">
+                    <div class="ttl-input-wrap">閲覧権限<?= $this->Template->isRequire('authority') ?></div>
+                </th>
+                <td class="btn-inline">
+                    <?php foreach ($valueOptions['userAuthorityId'] as $userAuthorityId => $userAuthorityName) : ?>
+                        <?= $this->Form->hidden('label_authorities.' . $userAuthorityId . '.id') ?>
+                        <?= $this->Template->checkbox('label_authorities.' . $userAuthorityId . '.user_authority_id', [
+                            'type' => 'checkbox',
+                            'value' => $userAuthorityId,
+                            'label' => ['class' => ['cmn-check', 'btn-tool'], 'text' => $userAuthorityName],
+                            'id' => 'label-authorities-user-authority-id-' . $userAuthorityId,
+                            'class' => ['js_access'],
+                        ]) ?>
+                    <?php endforeach; ?>
+                </td>
+            </tr>
             </tbody>
         </table>
     </fieldset>

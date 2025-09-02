@@ -86,4 +86,20 @@ class LabelHelper extends Helper
 
         return $output;
     }
+
+    /**
+     * 会員権限の名称を取得
+     *
+     * @param int $user_authority_id 会員権限id
+     * @return string
+     */
+    public function getUserAuthorityName($user_authority_id)
+    {
+        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
+        $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+
+        $userAuthority = $userAuthoritiesTable->get($user_authority_id);
+
+        return $userAuthority->get('name');
+    }
 }

@@ -61,6 +61,7 @@ class Label extends AppEntity
         'events' => false,
         'child_labels' => false,
         'news' => false,
+        'label_authorities' => true,
     ];
 
     /**
