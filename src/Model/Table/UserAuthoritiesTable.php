@@ -77,6 +77,9 @@ class UserAuthoritiesTable extends AppTable
         $this->hasMany('Users', [
             'foreignKey' => 'user_authority_id',
         ]);
+        $this->hasMany('LabelAuthorities', [
+            'foreignKey' => 'user_authority_id',
+        ]);
 
         $this->getBehavior('AdminOperationLog')->setConfig([
             'saveOperation' => true,

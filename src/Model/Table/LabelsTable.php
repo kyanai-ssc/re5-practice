@@ -110,12 +110,12 @@ class LabelsTable extends AppTable
      */
     protected function buildFieldValueOptions()
     {
-        /** @var \App\Model\Table\UserAuthoritiesTable $userAuthoritiesTable */
-        $userAuthoritiesTable = $this->fetchTable('UserAuthorities');
+        /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
+        $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
 
         $fieldValueOptions = [
             'publicFlg' => Configure::readOrFail('Master.label.publicFlg'),
-            'userAuthorityId' => $userAuthoritiesTable->getSelectList(false),
+            'userAuthorityId' => $labelAuthoritiesTable->getFieldValueOptions('userAuthorityId'),
         ];
 
         return $fieldValueOptions;
@@ -738,22 +738,6 @@ class LabelsTable extends AppTable
                     $orWhere = [];
                     $userAuthorities = Hash::get($args, 'user_authority_id');
 
-                    if (empty($userAuthorities)) {
-                        $orWhere[] = function ($expression) {
-                            /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
-                            $labelAuthoritiesTable = $this->getTableLocator()->get('LabelAuthorities');
-
-                            $labelAuthoritiesQuery = $labelAuthoritiesTable->find();
-                            $labelAuthoritiesQuery->select(['LabelAuthorities.id']);
-                            $labelAuthoritiesQuery->where([
-                                'LabelAuthorities.label_id = labels.id',
-                            ]);
-                            $expression->notExists($labelAuthoritiesQuery);
-
-                            return $expression;
-                        };
-                    }
-
                     if (!empty($userAuthorities)) {
                         /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
                         $labelAuthoritiesTable = $this->getTableLocator()->get('LabelAuthorities');
@@ -799,6 +783,7 @@ class LabelsTable extends AppTable
             'AutoReplyMails' => ['fields' => ['id', 'label_id']],
             'News' => ['fields' => ['id', 'label_id']],
             'LabelAuthorities' => ['fields' => ['id', 'label_id', 'user_authority_id']],
+            'LabelAuthorities.UserAuthorities' => ['fields' => ['name']],
         ]);
 
         $sort = Hash::get($options, 'inputs.sort', 'id');

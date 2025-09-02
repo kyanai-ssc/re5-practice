@@ -53,7 +53,7 @@
             </tr>
             <tr class="field-input">
                 <th class="ttl-input">
-                    <div class="ttl-input-wrap">閲覧権限<?= $this->Template->isRequire('authority') ?></div>
+                    <div class="ttl-input-wrap">閲覧権限<?= $this->Template->isRequire('label_authorities') ?></div>
                 </th>
                 <td class="btn-inline">
                     <?php foreach ($valueOptions['userAuthorityId'] as $userAuthorityId => $userAuthorityName) : ?>

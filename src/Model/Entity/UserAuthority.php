@@ -31,6 +31,7 @@ use App\Utility\ArrayUtility;
  * @property \App\Model\Entity\AutoReplyMail[] $auto_reply_mails
  * @property \App\Model\Entity\NewsAuthority[] $news_authorities
  * @property \App\Model\Entity\User[] $users
+ * @property \App\Model\Entity\LabelAuthority[] $label_authorities
  */
 class UserAuthority extends AppEntity
 {
@@ -88,6 +89,7 @@ class UserAuthority extends AppEntity
         'news_authorities' => false,
         'users' => false,
         'charge_multiplier' => true,
+        'label_authorities' => false,
     ];
 
     /**

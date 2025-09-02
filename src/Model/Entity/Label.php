@@ -22,6 +22,7 @@ use App\Model\AppEntity;
  * @property \App\Model\Entity\Event[] $events
  * @property \App\Model\Entity\Label[] $child_labels
  * @property \App\Model\Entity\News[] $news
+ * @property \App\Model\Entity\LabelAuthority[] $label_authorities
  */
 class Label extends AppEntity
 {

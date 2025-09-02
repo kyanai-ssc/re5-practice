@@ -229,7 +229,7 @@ $this->Breadcrumbs->add(
                         <td class="min-maxW-120 w-120">
                             <?php if (!empty($label->label_authorities)) : ?>
                                 <?php foreach ($label->label_authorities as $labelAuthorities) : ?>
-                                        <p><?= h($this->Label->getUserAuthorityName($labelAuthorities->user_authority_id)) ?></p>
+                                        <p><?= h($labelAuthorities->user_authority->name) ?></p>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </td>
