@@ -159,6 +159,11 @@ class LabelsController extends AdminAppController
             // 入力値取得
             $label = $labelsTable->newEntity($labelsTable->getDefaultFieldValues(), [
                 'validate' => false,
+                'associated' => [
+                    'LabelAuthorities' => [
+                        'validate' => false,
+                    ],
+                ],
             ]);
         }
 
@@ -193,7 +198,11 @@ class LabelsController extends AdminAppController
         // HTTPメソッドチェック
         if ($this->getRequest()->is('post')) {
             // 入力チェック
-            $label = $labelsTable->patchEntity($label, (array)$this->getRequest()->getData());
+            $label = $labelsTable->patchEntity($label, (array)$this->getRequest()->getData(), [
+                'associated' => [
+                    'LabelAuthorities' => [],
+                ],
+            ]);
 
             if (
                 $labelsTable->save(
