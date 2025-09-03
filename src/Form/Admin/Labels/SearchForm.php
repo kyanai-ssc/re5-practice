@@ -55,7 +55,8 @@ class SearchForm extends AppForm
             ->addField('sort', 'string')
             ->addField('direction', 'string')
             ->addField('limit', 'integer')
-            ->addField('page', 'integer');
+            ->addField('page', 'integer')
+            ->addField('user_authority_id', 'integer');
 
         return $schema;
     }
@@ -129,10 +130,42 @@ class SearchForm extends AppForm
                 ],
             ]);
 
+            $validator
+            ->requirePresence('user_authority_id', false)
+            ->allowEmptyArray('user_authority_id')
+            ->add('user_authority_id', [
+                'isArray' => [
+                    'rule' => ['isArray'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                ],
+                'multiple' => [
+                    'rule' => ['multiple', [
+                        'in' => array_keys($this->getFieldValueOptions('userAuthorityId')),
+                    ]],
+                    'last' => true,
+                    'message' => __(Message::ERROR_IN_LIST),
+                ],
+            ]);
+
         $this->addPaginateValidation($validator, [
             'fieldValueOptions' => $this->getFieldValueOptions(),
         ]);
 
         return $validator;
+    }
+
+    /**
+     * フィールドの値リストへ追加
+     *
+     * @param array $add 追加する値
+     * @return void
+     */
+    public function addFieldValueOptions(array $add)
+    {
+        $fieldValueOptions = $this->getFieldValueOptions();
+        $fieldValueOptions += $add;
+
+        $this->setFieldValueOptions($fieldValueOptions);
     }
 }

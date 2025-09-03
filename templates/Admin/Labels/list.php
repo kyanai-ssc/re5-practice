@@ -75,6 +75,18 @@ $this->Breadcrumbs->add(
                                 ]) ?>
                             </td>
                         </tr>
+                        <tr class="field-input">
+                            <th class="ttl-input">
+                                <div class="ttl-input-wrap">閲覧権限</div>
+                            </th>
+                            <td>
+                                <?= $this->Template->checkbox('user_authority_id', [
+                                    'type' => 'multicheckbox',
+                                    'label' => false,
+                                    'options' => $valueOptions['userAuthorityId'],
+                                ]) ?>
+                            </td>
+                        </tr>
                     </table>
                 </fieldset>
             </div>
@@ -183,6 +195,14 @@ $this->Breadcrumbs->add(
                                 ]) ?>
                             </div>
                         </th>
+                        <th class="min-maxW-120 w-120">
+                            <div class="sort_wrap">
+                                <span>閲覧権限</span>
+                                <?= $this->element('Admin/Common/search/sort', [
+                                    'key' => 'user_authority_id',
+                                ]) ?>
+                            </div>
+                        </th>
                     </tr>
                     </thead>
                 </table>
@@ -205,6 +225,11 @@ $this->Breadcrumbs->add(
                         </td>
                         <td class="min-maxW-120 w-120">
                             <?= h($valueOptions['publicFlg'][$label->data['public_flg']]) ?>
+                        </td>
+                        <td class="min-maxW-120 w-120">
+                            <?php foreach ($label->label_authorities as $labelAuthorities) : ?>
+                                    <p><?= h($labelAuthorities->user_authority->name) ?></p>
+                            <?php endforeach; ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

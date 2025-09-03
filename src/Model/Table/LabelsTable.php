@@ -10,6 +10,8 @@ use App\Utility\ArrayUtility;
 use App\Validation\CustomValidation;
 use Cake\Collection\CollectionInterface;
 use Cake\Core\Configure;
+use Cake\Datasource\EntityInterface;
+use Cake\Event\EventInterface;
 use Cake\ORM\Query;
 use Cake\Utility\Hash;
 use Cake\Validation\Validation;
@@ -70,9 +72,37 @@ class LabelsTable extends AppTable
             'foreignKey' => 'label_id',
         ]);
 
+        $this->hasMany('LabelAuthorities', [
+            'foreignKey' => 'label_id',
+            'saveStrategy' => 'replace',
+            'dependent' => true,
+        ]);
+
         $this->getBehavior('AdminOperationLog')->setConfig([
             'saveOperation' => true,
         ]);
+    }
+
+    /**
+     * beforeSaveイベント
+     *
+     * @param \Cake\Event\EventInterface $event イベント
+     * @param \Cake\Datasource\EntityInterface $entity エンティティ
+     * @param \ArrayObject $options オプション
+     * @return void
+     */
+    public function beforeSave(EventInterface $event, EntityInterface $entity, \ArrayObject $options)
+    {
+        $labelAuthorities = $entity->get('label_authorities');
+
+        $setLabelAuthorities = [];
+        foreach ($labelAuthorities as $labelAuthority) {
+            if (!empty($labelAuthority->get('user_authority_id'))) {
+                $setLabelAuthorities[] = $labelAuthority;
+            }
+        }
+
+        $entity->set('label_authorities', $setLabelAuthorities);
     }
 
     /**
@@ -80,8 +110,12 @@ class LabelsTable extends AppTable
      */
     protected function buildFieldValueOptions()
     {
+        /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
+        $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
+
         $fieldValueOptions = [
             'publicFlg' => Configure::readOrFail('Master.label.publicFlg'),
+            'userAuthorityId' => $labelAuthoritiesTable->getFieldValueOptions('userAuthorityId'),
         ];
 
         return $fieldValueOptions;
@@ -211,6 +245,11 @@ class LabelsTable extends AppTable
                 ],
             ]);
 
+        $validator
+            ->requirePresence('label_authorities', false)
+            ->allowEmptyArray('label_authorities')
+            ->array('label_authorities', __(Message::ERROR_INVALID_VALUE));
+
         return $validator;
     }
 
@@ -291,6 +330,15 @@ class LabelsTable extends AppTable
         $query->select(
             ['id', 'name', 'public_flg', 'parent_id', 'sort_no']
         );
+        $query->contain([
+            'LabelAuthorities' => [
+                'fields' => [
+                    'id',
+                    'label_id',
+                    'user_authority_id',
+                ],
+            ],
+        ]);
 
         return $query;
     }
@@ -684,6 +732,32 @@ class LabelsTable extends AppTable
                         }
                     }
                 },
+            ])
+            ->callback('user_authority_id', [
+                'callback' => function ($query, $args) {
+                    $orWhere = [];
+                    $userAuthorities = Hash::get($args, 'user_authority_id');
+
+                    if (!empty($userAuthorities)) {
+                        /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
+                        $labelAuthoritiesTable = $this->getTableLocator()->get('LabelAuthorities');
+
+                        $labelAuthoritiesQuery = $labelAuthoritiesTable->find();
+                        $labelAuthoritiesQuery->select(['label_id']);
+                        $labelAuthoritiesQuery->where([
+                            'LabelAuthorities.user_authority_id IN' => $userAuthorities,
+                        ]);
+                        $orWhere[] = [
+                            'Labels.id IN' => $labelAuthoritiesQuery,
+                        ];
+                    }
+
+                    if (!empty($orWhere)) {
+                        $query->where([
+                            'OR' => $orWhere,
+                        ]);
+                    }
+                },
             ]);
     }
 
@@ -708,6 +782,8 @@ class LabelsTable extends AppTable
             'Events' => ['fields' => ['id', 'label_id']],
             'AutoReplyMails' => ['fields' => ['id', 'label_id']],
             'News' => ['fields' => ['id', 'label_id']],
+            'LabelAuthorities' => ['fields' => ['id', 'label_id', 'user_authority_id']],
+            'LabelAuthorities.UserAuthorities' => ['fields' => ['name']],
         ]);
 
         $sort = Hash::get($options, 'inputs.sort', 'id');
@@ -1061,5 +1137,24 @@ class LabelsTable extends AppTable
         }
 
         return $adminUsableLabelIds;
+    }
+
+    /**
+     * 編集時の初期データを設定
+     *
+     * @param \Cake\Datasource\EntityInterface $entity エンティティ
+     * @return mixed
+     */
+    public function formatDefault(EntityInterface $entity)
+    {
+        $labelAuthorities = $entity->get('label_authorities');
+
+        $setLabelAuthorities = [];
+
+        foreach ($labelAuthorities as $labelAuthority) {
+            $setLabelAuthorities[$labelAuthority->get('user_authority_id')] = $labelAuthority;
+        }
+
+        $entity->set('label_authorities', $setLabelAuthorities);
     }
 }
