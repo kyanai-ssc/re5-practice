@@ -364,6 +364,9 @@ class Reservation extends AppEntity
                 ]);
                 foreach ($options as $option) {
                     $optionDayCharge = $option->get('charge') * $usageDay;
+                    $optionUnitTime = $usageTime / $option->get('option_unit_time');
+                    // オプション料金計算を時間単位で行う
+                    $optionDayCharge = (int)bcmul((string)$optionDayCharge, (string)$optionUnitTime);
                     $optionCharge = $optionDayCharge * $optionNumbers[$option->get('id')];
                     $optionTotalCharge += $optionCharge;
 

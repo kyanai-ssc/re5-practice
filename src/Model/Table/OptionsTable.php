@@ -45,6 +45,7 @@ class OptionsTable extends AppTable
     public const STOCK_UNIT_MAX = 100;
     public const CHARGE_MAX = 10000000;
     public const DESCRIPTION_MAX = 10000;
+    public const OPTION_UNIT_TIME_MAX = 3;
 
     /**
      * @inheritDoc
@@ -275,6 +276,22 @@ class OptionsTable extends AppTable
             ->allowEmptyArray('option_stock_settings')
             ->array('option_stock_settings', __(Message::ERROR_NOT_EMPTY));
 
+        $validator
+            ->requirePresence('option_unit_time', true, __(Message::ERROR_NOT_EMPTY))
+            ->allowEmptyString('option_unit_time')
+            ->add('option_unit_time', [
+                'halfSizeNumber' => [
+                    'rule' => ['custom', '/^[0-9]+$/'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_HALF_SIZE_NUMBER),
+                ],
+                'maxLength' => [
+                    'rule' => ['maxLength', static::OPTION_UNIT_TIME_MAX],
+                    'last' => true,
+                    'message' => __(Message::ERROR_MAX_LENGTH, static::OPTION_UNIT_TIME_MAX),
+                ],
+            ]);
+
         return $validator;
     }
 
@@ -486,6 +503,7 @@ class OptionsTable extends AppTable
             'charge',
             'public_flg',
             'description',
+            'option_unit_time',
         ])->contain([
             'OptionStockSettings' => [
                 'fields' => [

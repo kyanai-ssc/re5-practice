@@ -132,6 +132,21 @@ $this->Form->unlockField('option_stock_settings');
                     ]) ?>
                 </td>
             </tr>
+            <tr class="field-input">
+                <th class="ttl-input">
+                    <div class="ttl-input-wrap">時間単位<?= $this->Template->isRequire('option_unit_time') ?></div>
+                </th>
+                <td>
+                    <div class="d-flex">
+                            <?= $this->Form->control('option_unit_time', [
+                                'type' => 'text',
+                                'label' => false,
+                                'class' => ['textbox_w150'],
+                            ]) ?>
+                        <span class="txt mgl-10 mgr-10">分ごとに料金計算</span>
+                    </div>
+                </td>
+            </tr>
             </tbody>
         </table>
     </fieldset>
