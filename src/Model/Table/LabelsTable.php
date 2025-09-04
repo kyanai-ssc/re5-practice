@@ -572,6 +572,7 @@ class LabelsTable extends AppTable
         $displayMax = null,
         $fixationId = null
     ) {
+        $label_ids = [];
         if (!isset($displayMax)) {
             $displayMax = Configure::readOrFail('Setting.label.depth');
         }
@@ -586,19 +587,55 @@ class LabelsTable extends AppTable
             }
         }
 
-        // 指定のparentIdの親ラベル情報を取得
-        $parentsData[]['id'] = null;
-        $fixEndFlg = false;
-        $fixationIdDepth = 0;
-        foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
-            foreach ($parents as $parent) {
-                $parentsData[] = $parent;
-                if (!is_null($fixationId) && !$fixEndFlg) {
-                    $fixationIdDepth++;
-                }
+        if ($isAdmin) {
+            // 指定のparentIdの親ラベル情報を取得
+            $parentsData[]['id'] = null;
+            $fixEndFlg = false;
+            $fixationIdDepth = 0;
+            foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
+                foreach ($parents as $parent) {
+                    $parentsData[] = $parent;
+                    if (!is_null($fixationId) && !$fixEndFlg) {
+                        $fixationIdDepth++;
+                    }
 
-                if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
-                    $fixEndFlg = true;
+                    if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
+                        $fixEndFlg = true;
+                    }
+                }
+            }
+        } else {
+            // 指定のparentIdの親ラベル情報を取得
+            $parentsData[]['id'] = null;
+            $fixEndFlg = false;
+            $fixationIdDepth = 0;
+
+            if ($this->commonData()->existsUserLoginData()) {
+                // usersテーブルからユーザーのuser_authority_idを取得、label_authoritiesテーブルから取得したuser_authority_idと一致するlabel_idを取得、
+                $userAuthorityId = $this->commonData()->getUserLoginData()->get('user_authority_id');
+
+                /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
+                $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
+                $label_id = $labelAuthoritiesTable->find()
+                    ->select(['label_id'])
+                    ->where(['user_authority_id' => $userAuthorityId])
+                    ->all()
+                    ->toArray();
+                foreach ($label_id as $id) {
+                    $label_ids[] = $id->get('label_id');
+                }
+            }
+
+            foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
+                foreach ($parents as $parent) {
+                    $parentsData[] = $parent;
+                    if (!is_null($fixationId) && !$fixEndFlg) {
+                        $fixationIdDepth++;
+                    }
+
+                    if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
+                        $fixEndFlg = true;
+                    }
                 }
             }
         }
@@ -612,6 +649,10 @@ class LabelsTable extends AppTable
             }
 
             $tmp = $this->getNameDataByParentId($parent['id'], $excludeId, $onlyPublic);
+            if ($this->commonData()->existsUserLoginData()) {
+                // ラベルidと上記で取得したlabel_idが一致するデータのみを取得
+                $tmp = array_intersect_key($tmp, array_flip($label_ids));
+            }
 
             if ($tmp && ($depth <= $displayMax)) {
                 if (is_null($fixationId)) {
