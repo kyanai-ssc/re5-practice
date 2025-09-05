@@ -4588,21 +4588,8 @@ class EventsTable extends AppTable implements ImportableTableInterface
             $intervalTo = new FrozenDate($dateTo->format('Y-m-d'));
             $intervalTo = $intervalTo->addDays($this->getMaxInterval());
         }
-        $label_ids = [];
-        if ($this->commonData()->existsUserLoginData()) {
-            $userAuthorityId = $this->commonData()->getUserLoginData()->get('user_authority_id');
 
-            /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
-            $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
-            $label_id = $labelAuthoritiesTable->find()
-                ->select(['label_id'])
-                ->where(['user_authority_id' => $userAuthorityId])
-                ->all()
-                ->toArray();
-            foreach ($label_id as $id) {
-                $label_ids[] = $id->get('label_id');
-            }
-        }
+        $labelIds = $labelsTable->filterLabelIdByUserAuthority();
 
         $query->select([
             'id',
@@ -4812,9 +4799,9 @@ class EventsTable extends AppTable implements ImportableTableInterface
                     ],
                 ],
             ]);
-            if (!empty($label_ids)) {
+            if (!empty($labelIds)) {
                 $query->where([
-                    'label_id IN' => $label_ids,
+                    'label_id IN' => $labelIds,
                 ]);
             } else {
                 $query->where(['1 = 0']);
@@ -5419,7 +5406,6 @@ class EventsTable extends AppTable implements ImportableTableInterface
         $sub->setAlias('sub');
         $subQuery = $sub->find()->select([
             'id' => 'sub.id',
-            'label_id' => 'sub.label_id',
             'name' => 'sub.name',
             'sort_no' => 'sub.sort_no',
             'date_to' => 'sub.date_to',
@@ -5430,7 +5416,6 @@ class EventsTable extends AppTable implements ImportableTableInterface
 
         $query = $this->find()->select([
             'id',
-            'label_id',
             'name',
             'sort_no',
             'date_to',
@@ -5441,23 +5426,8 @@ class EventsTable extends AppTable implements ImportableTableInterface
 
         $query->from(['Events' => $subQuery]);
 
-        // $userAuthorityId = $this->commonData()->getUserLoginData()->get('user_authority_id');
-
-        // /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable *///TODOいらない？
-        // $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
-        // $label_id = $labelAuthoritiesTable->find()
-        //     ->select(['label_id'])
-        //     ->where(['user_authority_id' => $userAuthorityId])
-        //     ->all()
-        //     ->toArray();
-        // $label_ids = [];
-        // foreach ($label_id as $id) {
-        //     $label_ids[] = $id->get('label_id');
-        // }
-
         $query->where([
             'public_flg' => Event::PUBLIC_FLG_ON,
-            // 'label_id IN' => $label_ids,
             [
                 'OR' => [
                     'public_from IS NULL',
