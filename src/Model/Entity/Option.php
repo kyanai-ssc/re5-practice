@@ -23,6 +23,7 @@ use Cake\I18n\FrozenTime;
  * @property string|null $description
  * @property \Cake\I18n\FrozenTime $created
  * @property \Cake\I18n\FrozenTime $modified
+ * @property int|null $option_unit_time
  *
  * @property \App\Model\Entity\FormItemOption[] $form_item_options
  * @property \App\Model\Entity\OptionStockSetting[] $option_stock_settings
@@ -57,6 +58,7 @@ class Option extends AppEntity
         'form_item_options' => true,
         'option_stock_settings' => true,
         'reservation_options' => false,
+        'option_unit_time' => true,
     ];
 
     /**
