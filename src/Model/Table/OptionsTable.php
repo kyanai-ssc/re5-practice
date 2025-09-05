@@ -280,6 +280,11 @@ class OptionsTable extends AppTable
             ->requirePresence('option_unit_time', true, __(Message::ERROR_NOT_EMPTY))
             ->allowEmptyString('option_unit_time')
             ->add('option_unit_time', [
+                'isScalar' => [
+                    'rule' => ['isScalar'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                ],
                 'halfSizeNumber' => [
                     'rule' => ['custom', '/^[0-9]+$/'],
                     'last' => true,
