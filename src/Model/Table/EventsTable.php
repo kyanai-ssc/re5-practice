@@ -4589,7 +4589,9 @@ class EventsTable extends AppTable implements ImportableTableInterface
             $intervalTo = $intervalTo->addDays($this->getMaxInterval());
         }
 
-        $labelIds = $labelsTable->getLabelIdByUserAuthority();
+        if (!$adminFlg) {
+            $labelIds = $labelsTable->getLabelIdByUserAuthority();
+        }
 
         $query->select([
             'id',
@@ -4932,6 +4934,9 @@ class EventsTable extends AppTable implements ImportableTableInterface
      */
     public function findForUser(Query $query, array $options)
     {
+        /** @var \App\Model\Table\LabelsTable $labelsTable */
+        $labelsTable = $this->getTableLocator()->get('Labels');
+
         $query->select([
             'id',
             'label_id',
@@ -4989,6 +4994,12 @@ class EventsTable extends AppTable implements ImportableTableInterface
                 ],
             ],
         ]);
+
+        $labelIds = $labelsTable->getLabelIdByUserAuthority();
+
+        $query->whereInList('label_id', $labelIds, [
+                    'allowEmpty' => true,
+                ]);
 
         return $query;
     }

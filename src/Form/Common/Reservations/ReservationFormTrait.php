@@ -113,10 +113,9 @@ trait ReservationFormTrait
             $eventLabelId = null;
             $event = null;
             $eventId = (string)$parametersData['parameters']['event_id'];
-            if (ctype_digit($eventId)) {
-                /** @var \Cake\Datasource\EntityInterface $event */
-                $event = $eventsTable->find()->select(['label_id'])->where(['id' => (int)$eventId])->first();
-            }
+            /** @var \Cake\Datasource\EntityInterface|null $event */
+            $event = $eventsTable->find()->select(['label_id'])->where(['id' => (int)$eventId])->first();
+
             if ($event) {
                 $eventLabelId = (int)$event->get('label_id');
             }
