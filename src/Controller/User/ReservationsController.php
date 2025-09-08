@@ -235,10 +235,6 @@ class ReservationsController extends UserAppController
     {
         /** @var \App\Model\Table\SiteSettingsTable $siteSettingsTable */
         $siteSettingsTable = $this->fetchTable('SiteSettings');
-        /** @var \App\Model\Table\EventsTable $eventsTable */
-        $eventsTable = $this->fetchTable('Events');
-        /** @var \App\Model\Table\LabelsTable $labelsTable */
-        $labelsTable = $this->getTableLocator()->get('Labels');
 
         $optinData = [];
         if (!$this->commonData()->existsUserLoginData()) {
@@ -296,17 +292,6 @@ class ReservationsController extends UserAppController
                 }
                 $optinData = (array)$this->getRequest()->getSession()->read('reservationOptin.optinData');
             }
-        }
-
-        $labelIds = $labelsTable->filterLabelIdByUserAuthority();
-        $eventLabelId = null;
-        $eventId = $this->getRequest()->getQuery('event_id');
-        $event = $eventsTable->find()->select(['label_id'])->where(['id' => (int)$eventId])->first();
-        if ($event !== null && !is_array($event)) {
-            $eventLabelId = (int)$event->get('label_id');
-        }
-        if (!in_array($eventLabelId, $labelIds)) {
-            throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
         }
 
         $reservationForm = new ReservationForm();

@@ -587,43 +587,25 @@ class LabelsTable extends AppTable
             }
         }
 
-        if ($isAdmin) {
-            // 指定のparentIdの親ラベル情報を取得
-            $parentsData[]['id'] = null;
-            $fixEndFlg = false;
-            $fixationIdDepth = 0;
-            foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
-                foreach ($parents as $parent) {
-                    $parentsData[] = $parent;
-                    if (!is_null($fixationId) && !$fixEndFlg) {
-                        $fixationIdDepth++;
-                    }
+        // 指定のparentIdの親ラベル情報を取得
+        $parentsData[]['id'] = null;
+        $fixEndFlg = false;
+        $fixationIdDepth = 0;
+        foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
+            foreach ($parents as $parent) {
+                $parentsData[] = $parent;
+                if (!is_null($fixationId) && !$fixEndFlg) {
+                    $fixationIdDepth++;
+                }
 
-                    if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
-                        $fixEndFlg = true;
-                    }
+                if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
+                    $fixEndFlg = true;
                 }
             }
-        } else {
-            // 指定のparentIdの親ラベル情報を取得
-            $parentsData[]['id'] = null;
-            $fixEndFlg = false;
-            $fixationIdDepth = 0;
+        }
 
-            $labelIds = $this->filterLabelIdByUserAuthority();
-
-            foreach ($this->find('parents', ['inputs' => ['id' => $parentId]])->toArray() as $parents) {
-                foreach ($parents as $parent) {
-                    $parentsData[] = $parent;
-                    if (!is_null($fixationId) && !$fixEndFlg) {
-                        $fixationIdDepth++;
-                    }
-
-                    if (!is_null($fixationId) && (string)$parent['id'] === (string)$fixationId) {
-                        $fixEndFlg = true;
-                    }
-                }
-            }
+        if (!$isAdmin) {
+            $labelIds = $this->getLabelIdByUserAuthority();
         }
 
         $depth = 1;
@@ -1190,7 +1172,7 @@ class LabelsTable extends AppTable
      *
      * @return array
      */
-    public function filterLabelIdByUserAuthority()
+    public function getLabelIdByUserAuthority()
     {
         if ($this->commonData()->existsUserLoginData()) {
             /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
@@ -1207,9 +1189,9 @@ class LabelsTable extends AppTable
                 $labelIds[] = $id->get('label_id');
             }
 
-                return $labelIds;
+            return $labelIds;
         }
 
-                return [];
+        return [];
     }
 }

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Form\Common\Reservations;
 
+use App\Locale\Message;
 use App\Model\Entity\FormGroup;
 use App\Model\Entity\FormItem;
 use App\Model\Entity\Reservation;
@@ -10,6 +11,7 @@ use App\Model\InputType\Item\Type\InputInterface;
 use App\Model\Table\ReservationsTable;
 use Cake\Core\Exception\CakeException;
 use Cake\Form\Schema;
+use Cake\Http\Exception\BadRequestException;
 use Cake\Utility\Hash;
 
 /**
@@ -89,6 +91,10 @@ trait ReservationFormTrait
     {
         /** @var \App\Model\Table\ReservationsTable $reservationsTable */
         $reservationsTable = $this->getTableLocator()->get('Reservations');
+        /** @var \App\Model\Table\EventsTable $eventsTable */
+        $eventsTable = $this->fetchTable('Events');
+        /** @var \App\Model\Table\LabelsTable $labelsTable */
+        $labelsTable = $this->getTableLocator()->get('Labels');
 
         $parametersData = $reservationsTable->getReservationParametersData(
             $this->getReservationParameter(),
@@ -100,6 +106,23 @@ trait ReservationFormTrait
             $this->setErrors($parametersData['errors']);
 
             return false;
+        }
+
+        if (!$this->isAdmin() && !$this->reservationEntity) {
+            $labelIds = $labelsTable->getLabelIdByUserAuthority();
+            $eventLabelId = null;
+            $event = null;
+            $eventId = (string)$parametersData['parameters']['event_id'];
+            if (ctype_digit($eventId)) {
+                /** @var \Cake\Datasource\EntityInterface $event */
+                $event = $eventsTable->find()->select(['label_id'])->where(['id' => (int)$eventId])->first();
+            }
+            if ($event) {
+                $eventLabelId = (int)$event->get('label_id');
+            }
+            if (!in_array($eventLabelId, $labelIds)) {
+                throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
+            }
         }
 
         $this->setReservationParameter($parametersData['parameters']);

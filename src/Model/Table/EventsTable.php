@@ -4589,7 +4589,7 @@ class EventsTable extends AppTable implements ImportableTableInterface
             $intervalTo = $intervalTo->addDays($this->getMaxInterval());
         }
 
-        $labelIds = $labelsTable->filterLabelIdByUserAuthority();
+        $labelIds = $labelsTable->getLabelIdByUserAuthority();
 
         $query->select([
             'id',
@@ -4799,13 +4799,13 @@ class EventsTable extends AppTable implements ImportableTableInterface
                     ],
                 ],
             ]);
-            if (!empty($labelIds)) {
-                $query->where([
-                    'label_id IN' => $labelIds,
+
+            // $query->where([
+            //     'label_id IN' => $labelIds,
+            // ]);
+            $query->whereInList('label_id', $labelIds, [
+                    'allowEmpty' => true,
                 ]);
-            } else {
-                $query->where(['1 = 0']);
-            }
         }
 
         $labelId = Hash::get($options, 'inputs.label_id');
