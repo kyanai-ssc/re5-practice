@@ -112,7 +112,7 @@ trait ReservationFormTrait
             $labelIds = $labelsTable->getLabelIdByUserAuthority();
             $eventLabelId = null;
             $event = null;
-            $eventId = (string)$parametersData['parameters']['event_id'];
+            $eventId = $parametersData['parameters']['event_id'];
             /** @var \Cake\Datasource\EntityInterface|null $event */
             $event = $eventsTable->find()->select(['label_id'])->where(['id' => (int)$eventId])->first();
 
