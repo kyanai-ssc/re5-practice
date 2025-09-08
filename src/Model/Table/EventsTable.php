@@ -4800,9 +4800,6 @@ class EventsTable extends AppTable implements ImportableTableInterface
                 ],
             ]);
 
-            // $query->where([
-            //     'label_id IN' => $labelIds,
-            // ]);
             $query->whereInList('label_id', $labelIds, [
                     'allowEmpty' => true,
                 ]);
