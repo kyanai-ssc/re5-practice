@@ -4589,10 +4589,6 @@ class EventsTable extends AppTable implements ImportableTableInterface
             $intervalTo = $intervalTo->addDays($this->getMaxInterval());
         }
 
-        if (!$adminFlg) {
-            $labelIds = $labelsTable->getLabelIdByUserAuthority();
-        }
-
         $query->select([
             'id',
             'label_id',
@@ -4802,6 +4798,7 @@ class EventsTable extends AppTable implements ImportableTableInterface
                 ],
             ]);
 
+            $labelIds = $labelsTable->getLabelIdByUserAuthority();
             $query->whereInList('label_id', $labelIds, [
                     'allowEmpty' => true,
                 ]);
