@@ -4797,6 +4797,11 @@ class EventsTable extends AppTable implements ImportableTableInterface
                     ],
                 ],
             ]);
+
+            $labelIds = $labelsTable->getLabelIdByUserAuthority();
+            $query->whereInList('label_id', $labelIds, [
+                    'allowEmpty' => true,
+                ]);
         }
 
         $labelId = Hash::get($options, 'inputs.label_id');
@@ -4926,6 +4931,9 @@ class EventsTable extends AppTable implements ImportableTableInterface
      */
     public function findForUser(Query $query, array $options)
     {
+        /** @var \App\Model\Table\LabelsTable $labelsTable */
+        $labelsTable = $this->getTableLocator()->get('Labels');
+
         $query->select([
             'id',
             'label_id',
@@ -4983,6 +4991,12 @@ class EventsTable extends AppTable implements ImportableTableInterface
                 ],
             ],
         ]);
+
+        $labelIds = $labelsTable->getLabelIdByUserAuthority();
+
+        $query->whereInList('label_id', $labelIds, [
+                    'allowEmpty' => true,
+                ]);
 
         return $query;
     }

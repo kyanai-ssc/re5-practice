@@ -572,6 +572,7 @@ class LabelsTable extends AppTable
         $displayMax = null,
         $fixationId = null
     ) {
+        $labelIds = [];
         if (!isset($displayMax)) {
             $displayMax = Configure::readOrFail('Setting.label.depth');
         }
@@ -603,6 +604,10 @@ class LabelsTable extends AppTable
             }
         }
 
+        if (!$isAdmin) {
+            $labelIds = $this->getLabelIdByUserAuthority();
+        }
+
         $depth = 1;
         $value = [];
         $data = [];
@@ -612,6 +617,10 @@ class LabelsTable extends AppTable
             }
 
             $tmp = $this->getNameDataByParentId($parent['id'], $excludeId, $onlyPublic);
+            if ($this->commonData()->existsUserLoginData()) {
+                // $tmpに入っているラベルidと上記で取得したlabel_idが一致するデータのみを取得し上書き
+                $tmp = array_intersect_key($tmp, array_flip($labelIds));
+            }
 
             if ($tmp && ($depth <= $displayMax)) {
                 if (is_null($fixationId)) {
@@ -1156,5 +1165,33 @@ class LabelsTable extends AppTable
         }
 
         $entity->set('label_authorities', $setLabelAuthorities);
+    }
+
+    /**
+     * 会員の権限と同じ閲覧権限を持つカテゴリーIDを取得
+     *
+     * @return array
+     */
+    public function getLabelIdByUserAuthority()
+    {
+        if ($this->commonData()->existsUserLoginData()) {
+            /** @var \App\Model\Table\LabelAuthoritiesTable $labelAuthoritiesTable */
+            $labelAuthoritiesTable = $this->fetchTable('LabelAuthorities');
+
+            $labelIds = [];
+            $userAuthorityId = $this->commonData()->getUserLoginData()->get('user_authority_id');
+            $labelId = $labelAuthoritiesTable->find()
+                ->select(['label_id'])
+                ->where(['user_authority_id' => $userAuthorityId])
+                ->all()
+                ->toArray();
+            foreach ($labelId as $id) {
+                $labelIds[] = $id->get('label_id');
+            }
+
+            return $labelIds;
+        }
+
+        return [];
     }
 }
