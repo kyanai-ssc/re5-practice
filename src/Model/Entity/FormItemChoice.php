@@ -20,6 +20,11 @@ use App\Model\AppEntity;
 class FormItemChoice extends AppEntity
 {
     /**
+     * 繰り返し予約フラグ：可
+     */
+    public const REPEAT_RESERVATION_FLG_ON = '1';
+
+    /**
      * 繰り返し予約フラグ：不可
      */
     public const REPEAT_RESERVATION_FLG_OFF = '2';

@@ -1,3 +1,5 @@
 type,category,function,code,translate_key,name,word,word_default,multiple_row_flg,admin_flg
 2,0,0,166,ERROR_HALF_SIZE_DECIMAL_NUMBER,ERROR_HALF_SIZE_DECIMAL_NUMBER,半角数字記号（ドット）で入力してください,半角数字記号（ドット）で入力してください,0,0
 2,0,0,167,NO_EXIST_ATTRIBUTE_AUTHORITY_NAME,NO_EXIST_ATTRIBUTE_AUTHORITY_NAME,属性と同じ名称の権限が見つかりません。,属性と同じ名称の権限が見つかりません。,0,0
+2,0,0,168,ERROR_OVER_DAYS,ERROR_OVER_DAYS,365日以内の期間を入力してください,365日以内の期間を入力してください,0,0
+2,0,0,169,ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM,ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM,入力された期間内に予約できる日がありません。,入力された期間内に予約できる日がありません。,0,0

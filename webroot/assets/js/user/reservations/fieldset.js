@@ -82,6 +82,15 @@
         toggleReservationOption();
     };
 
+    // 連続予約：曜日選択表示の制御
+    var toggleSelectDayOfWeek = function() {
+        if ($('.js_select_day_of_week').prop('checked')) {
+            $('.js_day_of_week').show();
+        } else {
+            $('.js_day_of_week').hide();
+        }
+    };
+
     $(function () {
         // ログイン
         $(document).on('submit.login', '.js_reservation_login_form', function (event) {
@@ -124,6 +133,37 @@
         // オプション選択
         $(document).on('change.reservationOptionCheck', '.js_reservation_option_check', function (event) {
             toggleReservationOption();
+        });
+
+        // 繰り返し予約：選択変更
+        $(document).on('change', '.js_change_repeat_reservation', function (_event) {
+            $('.js_toggle_repeat_reservation').removeClass('hidden');
+            $('.js_toggle_repeat_reservation').hide();
+            $('.js_toggle_repeat_reservation_' + $('.js_change_repeat_reservation:checked').val()).show();
+            if ($('.js_select_day_of_week').prop('checked')) {
+                $('.js_day_of_week').show();
+            } else {
+                $('.js_day_of_week').hide();
+            }
+        });
+
+        // // 繰り返し予約：曜日選択
+        // $(document).on('change.selectDayOfWeek', '.js_select_day_of_week', function (event) {
+        //     toggleSelectDayOfWeek();
+        // });
+
+        // // 繰り返し予約：曜日選択
+        // $(document).on('change', '.js_select_day_of_week', function (_event) {
+        //     $('.js_day_of_week').removeClass('hidden');
+        //     $('.js_day_of_week').hide();
+        //     $('.js_day_of_week_' + $('.js_select_day_of_week:checked').val()).show();
+        // });
+
+        // 繰り返し予約：曜日選択
+        $(document).on('change', '.js_select_day_of_week', function (event) {
+            toggleSelectDayOfWeek();
+            $('.js_day_of_week').removeClass('hidden').hide();
+            $('.js_day_of_week_' + $('.js_select_day_of_week:checked').val()).show();
         });
 
         settingForm();
