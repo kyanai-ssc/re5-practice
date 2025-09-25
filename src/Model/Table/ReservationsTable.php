@@ -3505,10 +3505,9 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
         $validator->requirePresence('option_values', false);
         $validator->allowEmptyString('option_values');
 
-        //TODO　ここにバリデーション追加
         $validator
             ->requirePresence('repeat_reservation', false, __(Message::ERROR_NOT_EMPTY_SELECT))
-            ->allowEmptyString('repeat_reservation', __(Message::ERROR_NOT_EMPTY_SELECT), true)//TODO ここ未入力を許してる
+            ->allowEmptyString('repeat_reservation', __(Message::ERROR_NOT_EMPTY_SELECT), true)
             ->add('repeat_reservation', [
                 'isScalar' => [
                     'rule' => ['isScalar'],
@@ -3524,7 +3523,6 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
                     'last' => true,
                     'message' => __(Message::ERROR_IN_LIST),
                 ],
-                //TODO 期間内で予約できる日ない
                 'canNotReserve' => [
                     'rule' => function ($value, $context) {
                         return !($value === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION

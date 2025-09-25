@@ -147,18 +147,6 @@
             }
         });
 
-        // // 繰り返し予約：曜日選択
-        // $(document).on('change.selectDayOfWeek', '.js_select_day_of_week', function (event) {
-        //     toggleSelectDayOfWeek();
-        // });
-
-        // // 繰り返し予約：曜日選択
-        // $(document).on('change', '.js_select_day_of_week', function (_event) {
-        //     $('.js_day_of_week').removeClass('hidden');
-        //     $('.js_day_of_week').hide();
-        //     $('.js_day_of_week_' + $('.js_select_day_of_week:checked').val()).show();
-        // });
-
         // 繰り返し予約：曜日選択
         $(document).on('change', '.js_select_day_of_week', function (event) {
             toggleSelectDayOfWeek();

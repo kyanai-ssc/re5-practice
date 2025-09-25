@@ -515,91 +515,26 @@ trait ReservationFormTrait
 
         if (
             $data
-            && isset($data['reservations']['repeat_reservation'])
-            && $data['reservations']['repeat_reservation'] === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
+            && isset($reservationInputs['repeat_reservation'])
+            && $reservationInputs['repeat_reservation'] === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
             && !isset($reservationInputs['reserveDates'])
-            && isset($data['reservations']['usage_timestamp_from'])
-            && isset($data['reservations']['usage_time'])
+            && isset($reservationInputs['usage_timestamp_from'])
+            && isset($reservationInputs['usage_time'])
         ) {
-            $from = new FrozenTime($data['reservations']['usage_timestamp_from']);
-            $time = $from->format('H:i');
-            $to = new FrozenTime($data['reservations']['date_to'] . $time);
+            [$reservationInputs, $repeatReservationInputs] =
+                $this->createRepeatReservationData($reservationInputs, $entityOptions);
 
-            $allDate = new DatePeriod($from, new DateInterval('P1D'), $to->addDay());
-            $event = $this->getEventEntity();
-
-            $repeatReservationInputs = [];
-            if ($event) {
-                foreach ($allDate as $date) {
-                    //曜日指定ありの場合
-                    if ($data['reservations']['select_day_of_week']) {
-                        if (!DateTimeUtility::isWithinWeekHoliday($date, (array)$data['reservations']['day_of_week'])) {
-                            continue;
-                        }
-                    }
-                    //曜日指定がなかった場合
-                    $usageTimeDate = $date->modify('+' . $data['reservations']['usage_time'] . 'minutes');// 予約枠分だけ
-
-                    $eventTimetable = new EventTimetable($event, $date, $usageTimeDate, $this->isAdmin());
-                    $eventTimetable->setLimitDisplayTime(true);
-                    $eventTimetable->setLimitDisplayable(true);
-                    $eventTimetable->setExcludeOverday(true);
-                    $usageTimestampFrom = $date->format('Y/m/d H:i');
-                    $this->setReservationParameter([
-                        'event_id' => $entityOptions['otherOptions']['event']->get('id'),
-                        'usage_timestamp_from' => $usageTimestampFrom,
-                    ]);
-
-                    // 元の在庫を計算
-                    $eventTimetable->getTimetable();
-                    $eventTimetable->createReservedTimetable(null, null, true);
-                    $eventTimetable->applyReservation(
-                        $date,
-                        $usageTimeDate,
-                        (int)$data['reservations']['number'] - 1,
-                    );
-                    //↑で予約数からー１しているのは　予約数判定するときに予約枠の在庫が残り１の時かつ予約を予約枠１つ分したとき　
-                    //下の$eventTimetable->canReserve($date, $usageTimeDate)で在庫が０だとfalseになってしまうから。
-
-                    if (
-                        $this->validateReservationParameter()
-                        && ($eventTimetable->hasTimetable())
-                        && !$eventTimetable->isOutOfStock(true)
-                        && $eventTimetable->canReserve($date, $usageTimeDate)
-                    ) {
-                        $reservationInputs['reserveDates'][] = $usageTimestampFrom;
-                        $repeatReservationInput = $reservationInputs;
-                        $repeatReservationInput['usage_timestamp_from'] = $usageTimestampFrom;
-                        $repeatReservationInputs[] = $repeatReservationInput;
-                    } else {
-                        $reservationInputs['canNotReserveDates'][] = $usageTimestampFrom;
-                    }
-                }
-            }
-
-            $this->setReservationParameter($entityOptions['otherOptions']['parameters']);//上で変えてるから戻しているだけ
+            // 上記でsetReservationParameterを変更しているため戻す
+            $this->setReservationParameter($entityOptions['otherOptions']['parameters']);
 
             if ($repeatReservationInputs) {
-                $i = 0;
-                foreach ($repeatReservationInputs as $repeatReservationInput) {
-                    $entityOptions['otherOptions']['parameters']['usage_timestamp_from'] =
-                        $repeatReservationInput['usage_timestamp_from'];
-                    $repeatReservationInput['reserveDates'] = $reservationInputs['reserveDates'] ?? null;
-                    $repeatReservationInput['canNotReserveDates'] = $reservationInputs['canNotReserveDates'] ?? null;
-                    $this->repeatReservationDataEntity =
-                        $reservationsTable->newEntity($repeatReservationInput, $entityOptions);
-                    $entityErrors = $this->repeatReservationDataEntity->getErrors();
-                    if (empty($entityErrors)) {
-                        $repeatReservation['reservations'] = $this->repeatReservationDataEntity->toArray();
-                        $repeatReservationData[$i] = $repeatReservation;
-                        $this->setData(array_merge($this->getData(), ['repeatReservations' => $repeatReservationData]));
-                    } else {
-                        $this->setErrors(Hash::merge($this->getErrors(), ['reservations' => $entityErrors]));
-                    }
-                    $i++;
-                }
+                $this->createAndSetRepeatReservationEntity(
+                    $reservationInputs,
+                    $repeatReservationInputs,
+                    $entityOptions
+                );
                 $entityOptions['otherOptions']['parameters']['usage_timestamp_from'] =
-                    $data['reservations']['usage_timestamp_from'];
+                    $reservationInputs['usage_timestamp_from'];
             }
 
             if (!isset($this->reservationEntity)) {
@@ -644,5 +579,106 @@ trait ReservationFormTrait
     public function setChangeForm(bool $isChangeForm)
     {
         $this->isChangeForm = $isChangeForm;
+    }
+
+    /**
+     * 繰り返し予約データの作成
+     *
+     * @param array $reservationInputs 予約データ
+     * @param array $entityOptions オプション
+     * @return array
+     */
+    public function createRepeatReservationData($reservationInputs, $entityOptions)
+    {
+        $from = new FrozenTime($reservationInputs['usage_timestamp_from']);
+        $time = $from->format('H:i');
+        $to = new FrozenTime($reservationInputs['date_to'] . $time);
+
+        $allDate = new DatePeriod($from, new DateInterval('P1D'), $to->addDay());
+        $event = $this->getEventEntity();
+
+        $repeatReservationInputs = [];
+        if ($event) {
+            foreach ($allDate as $date) {
+                // 曜日指定ありの場合
+                if ($reservationInputs['select_day_of_week']) {
+                    if (!DateTimeUtility::isWithinWeekHoliday($date, (array)$reservationInputs['day_of_week'])) {
+                        continue;
+                    }
+                }
+                // 曜日指定がなかった場合
+                $usageTimeDate = $date->modify('+' . $reservationInputs['usage_time'] . 'minutes');// 予約枠分だけ
+
+                $eventTimetable = new EventTimetable($event, $date, $usageTimeDate, $this->isAdmin());
+                $eventTimetable->setLimitDisplayTime(true);
+                $eventTimetable->setLimitDisplayable(true);
+                $eventTimetable->setExcludeOverday(true);
+                $usageTimestampFrom = $date->format('Y/m/d H:i');
+                $this->setReservationParameter([
+                    'event_id' => $entityOptions['otherOptions']['event']->get('id'),
+                    'usage_timestamp_from' => $usageTimestampFrom,
+                ]);
+
+                // 元の在庫を計算
+                $eventTimetable->getTimetable();
+                $eventTimetable->createReservedTimetable(null, null, true);
+                $eventTimetable->applyReservation(
+                    $date,
+                    $usageTimeDate,
+                    (int)$reservationInputs['number'] - 1,
+                );
+                // 予約数からー１しているのは　残りの在庫数と同じだけ予約した場合、
+                // 下の$eventTimetable->canReserve($date, $usageTimeDate)で在庫が０だとfalseになってしまうため
+
+                if (
+                    $this->validateReservationParameter()
+                    && ($eventTimetable->hasTimetable())
+                    && !$eventTimetable->isOutOfStock(true)
+                    && $eventTimetable->canReserve($date, $usageTimeDate)
+                ) {
+                    $reservationInputs['reserveDates'][] = $usageTimestampFrom;
+                    $repeatReservationInput = $reservationInputs;
+                    $repeatReservationInput['usage_timestamp_from'] = $usageTimestampFrom;
+                    $repeatReservationInputs[] = $repeatReservationInput;
+                } else {
+                    $reservationInputs['canNotReserveDates'][] = $usageTimestampFrom;
+                }
+            }
+        }
+
+        return [$reservationInputs, $repeatReservationInputs];
+    }
+
+    /**
+     * 繰り返し予約データのエンティティを作成
+     *
+     * @param array $reservationInputs 予約データ
+     * @param array $repeatReservationInputs 繰り返し予約データ
+     * @param array  $entityOptions オプション
+     * @return void
+     */
+    public function createAndSetRepeatReservationEntity($reservationInputs, $repeatReservationInputs, $entityOptions)
+    {
+        /** @var \App\Model\Table\ReservationsTable $reservationsTable */
+        $reservationsTable = $this->getTableLocator()->get('Reservations');
+
+        $i = 0;
+        foreach ($repeatReservationInputs as $repeatReservationInput) {
+            $entityOptions['otherOptions']['parameters']['usage_timestamp_from'] =
+                $repeatReservationInput['usage_timestamp_from'];
+            $repeatReservationInput['reserveDates'] = $reservationInputs['reserveDates'] ?? null;
+            $repeatReservationInput['canNotReserveDates'] = $reservationInputs['canNotReserveDates'] ?? null;
+            $this->repeatReservationDataEntity =
+                $reservationsTable->newEntity($repeatReservationInput, $entityOptions);
+            $entityErrors = $this->repeatReservationDataEntity->getErrors();
+            if (empty($entityErrors)) {
+                $repeatReservation['reservations'] = $this->repeatReservationDataEntity->toArray();
+                $repeatReservationData[$i] = $repeatReservation;
+                $this->setData(array_merge($this->getData(), ['repeatReservations' => $repeatReservationData]));
+            } else {
+                $this->setErrors(Hash::merge($this->getErrors(), ['reservations' => $entityErrors]));
+            }
+            $i++;
+        }
     }
 }
