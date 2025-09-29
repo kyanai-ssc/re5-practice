@@ -91,6 +91,8 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
 
     public const CHARGE_MAX = 1000000000;
 
+    public const OVER_YEAR_DATES = 366;
+
     /**
      * 決済トラッキングID：MAX
      */
@@ -3504,126 +3506,6 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
         $validator->addNested('option_values', $optionValidator);
         $validator->requirePresence('option_values', false);
         $validator->allowEmptyString('option_values');
-
-        $validator
-            ->requirePresence('repeat_reservation', false, __(Message::ERROR_NOT_EMPTY_SELECT))
-            ->allowEmptyString('repeat_reservation', __(Message::ERROR_NOT_EMPTY_SELECT), true)
-            ->add('repeat_reservation', [
-                'isScalar' => [
-                    'rule' => ['isScalar'],
-                    'last' => true,
-                    'message' => __(Message::ERROR_INVALID_VALUE),
-                ],
-                'inList' => [
-                    'rule' => ['inList',
-                        [(string)Reservation::RESERVATION_TYPE_ONE_RESERVATION,
-                            (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION,
-                    ],
-                    ],
-                    'last' => true,
-                    'message' => __(Message::ERROR_IN_LIST),
-                ],
-                'canNotReserve' => [
-                    'rule' => function ($value, $context) {
-                        return !($value === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
-                            && empty($context['data']['reserveDates']));
-                    },
-                    'last' => true,
-                    'message' => __(Message::ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM),
-                ],
-            ]);
-
-        $repeatReservation = function ($context) {
-            return $context['data']['repeat_reservation'] === '2';
-        };
-
-        $validator
-            ->requirePresence('date_to', $repeatReservation, __(Message::ERROR_NOT_EMPTY_SELECT))
-            ->notEmptyString('date_to', __(Message::ERROR_NOT_EMPTY_SELECT), $repeatReservation)
-            ->add('date_to', [
-                'isScalar' => [
-                    'rule' => ['isScalar'],
-                    'last' => true,
-                    'message' => __(Message::ERROR_INVALID_VALUE),
-                    'on' => $repeatReservation,
-                ],
-                'date' => [
-                    'rule' => [
-                        'date',
-                        'ymd',
-                    ],
-                    'last' => true,
-                    'message' => __(Message::ERROR_DATE),
-                    'on' => $repeatReservation,
-                ],
-                'compareFields' => [
-                    'rule' => function ($value, $context) {
-                        $from = $context['data']['usage_timestamp_from'];
-                        $to = $value;
-                        $fromDate = new FrozenDate($from);
-                        $toDate = new FrozenDate($to);
-
-                        return $fromDate <= $toDate;
-                    },
-                    'last' => true,
-                    'message' => __(Message::ERROR_OVER_FROM_DATETIME),
-                    'on' => $repeatReservation,
-                ],
-                'withInOneYear' => [
-                    'rule' => function ($value, $context) {
-                        $from = $context['data']['usage_timestamp_from'];
-                        $to = $value;
-                        $fromDate = new FrozenDate($from);
-                        $toDate = new FrozenDate($to);
-                        $diff = $fromDate->diff($toDate)->days;
-
-                        return $diff < 366;
-                    },
-                    'last' => true,
-                    'message' => __(Message::ERROR_OVER_DAYS),
-                    'on' => $repeatReservation,
-                ],
-            ]);
-
-            $validator
-            ->requirePresence('select_day_of_week', false, __(Message::ERROR_NOT_EMPTY_SELECT))
-            ->allowEmptyString('select_day_of_week', __(Message::ERROR_NOT_EMPTY_SELECT), true)
-            ->add('select_day_of_week', [
-                'isScalar' => [
-                    'rule' => ['isScalar'],
-                    'last' => true,
-                    'message' => __(Message::ERROR_INVALID_VALUE),
-                    'on' => $repeatReservation,
-                ],
-                'inList' => [
-                    'rule' => ['inList', Configure::readOrFail('Master.common.flg')],
-                    'last' => true,
-                    'message' => __(Message::ERROR_IN_LIST),
-                    'on' => $repeatReservation,
-                ],
-            ]);
-
-            $selectDayOfWeek = function ($context) {
-                return $context['data']['select_day_of_week'] === '1';
-            };
-
-            $validator
-            ->requirePresence('day_of_week', $selectDayOfWeek, __(Message::ERROR_NOT_EMPTY_SELECT))
-            ->notEmptyString('day_of_week', __(Message::ERROR_NOT_EMPTY_SELECT), $selectDayOfWeek)
-            ->add('day_of_week', [
-                'isScalar' => [
-                    'rule' => ['isScalar'],
-                    'last' => true,
-                    'message' => __(Message::ERROR_INVALID_VALUE),
-                    'on' => $repeatReservation,
-                ],
-                'inList' => [
-                    'rule' => ['inList', array_keys(Configure::readOrFail('Master.common.week'))],
-                    'last' => true,
-                    'message' => __(Message::ERROR_IN_LIST),
-                    'on' => $repeatReservation,
-                ],
-            ]);
 
         return $validator;
     }

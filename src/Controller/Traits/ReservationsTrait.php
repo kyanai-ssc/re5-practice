@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Traits;
 
 use App\Locale\Message;
+use App\Model\Entity\Reservation;
 use App\Model\Table\ReservationsTable;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Utility\Hash;
@@ -114,11 +115,12 @@ trait ReservationsTrait
                     $continuousKey = $reservationForm->getContinuousParameter('key');
                     if (
                         isset($reservationInputs['reservations']['repeat_reservation'])
-                        && $reservationInputs['reservations']['repeat_reservation'] === '2'
+                        && $reservationInputs['reservations']['repeat_reservation'] ===
+                             (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
                     ) {
-                        $canReserveData = $reservationForm->getData('repeatReservations') ?? null;
-                        if ($canReserveData) {
-                            foreach ($canReserveData as $continuousKey => $data) {
+                        $repeatReservations = $reservationForm->getData('repeatReservations') ?? null;
+                        if ($repeatReservations) {
+                            foreach ($repeatReservations as $continuousKey => $data) {
                                 $reservationForm->setReservationParameter(
                                     [
                                         'reservation_type' => ReservationsTable::RESERVATION_TYPE_EXISTING_USER,

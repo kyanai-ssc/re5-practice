@@ -111,8 +111,9 @@ class Reservation extends AppEntity
         'date_to' => true,
         'select_day_of_week' => true,
         'day_of_week' => true,
-        'reserveDates' => true,
-        'canNotReserveDates' => true,
+        'reserve_dates' => true,
+        'can_not_reserve_dates' => true,
+        'validate_reserve_date_flg' => false,
     ];
 
     /**

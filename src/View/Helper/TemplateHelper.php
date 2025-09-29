@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\View\Helper;
 
 use App\Mailer\DefaultMailer;
+use App\Model\Entity\FormItem;
 use App\Model\Entity\FormItemChoice;
 use App\Utility\CommonData\CommonDataTrait;
 use App\Utility\DateTimeUtility;
@@ -443,9 +444,9 @@ class TemplateHelper extends Helper
         $reservationVideoMeetingsTable = $this->getTableLocator()->get('ReservationVideoMeetings');
 
         $result = false;
-        if ($userEntity->id !== null) {
+        if ($userEntity->user_additions !== null) {
             foreach ($userEntity->user_additions as $addition) {
-                if ($addition->form_item_id === 34) {
+                if ($addition->form_item_id === FormItem::ID_REPEAT_RESERVATION_FLG) {
                     if ($addition->value === FormItemChoice::REPEAT_RESERVATION_FLG_ON) {
                         $result = true;
                     }
@@ -461,7 +462,7 @@ class TemplateHelper extends Helper
             !$this->Setting->getSystemSetting()
                 ->get('reservation_continuous_flg') === Configure::read('Master.common.flg.off')
             || $userEntity->isGuest()
-            || $reservationEntity->qr_code !== null
+            || $reservationEntity->displayQrCode()
             || $reservationVideoMeetingsTable->shouldProcessOnReserve($reservationEntity)
         ) {
             return false;

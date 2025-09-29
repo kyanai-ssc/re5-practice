@@ -3,19 +3,22 @@ declare(strict_types=1);
 
 namespace App\Form\Common\Reservations;
 
+use App\Form\User\Reservations\ReservationForm;
 use App\Locale\Message;
 use App\Model\Entity\FormGroup;
 use App\Model\Entity\FormItem;
 use App\Model\Entity\Reservation;
-use App\Model\EventCalendar\EventTimetable;
 use App\Model\InputType\Item\Type\InputInterface;
 use App\Model\Table\ReservationsTable;
 use App\Utility\DateTimeUtility;
+use Cake\Core\Configure;
 use Cake\Core\Exception\CakeException;
 use Cake\Form\Schema;
 use Cake\Http\Exception\BadRequestException;
+use Cake\I18n\FrozenDate;
 use Cake\I18n\FrozenTime;
 use Cake\Utility\Hash;
+use Cake\Validation\Validator;
 use DateInterval;
 use DatePeriod;
 
@@ -343,7 +346,8 @@ trait ReservationFormTrait
             ->addField('reservations.date_to', 'string')
             ->addField('reservations.select_day_of_week', 'string')
             ->addField('reservations.day_of_week', 'string')
-            ->addField('reservations.usage_timestamp_from', 'string');
+            ->addField('reservations.usage_timestamp_from', 'string')
+            ->addField('reservations.validate_reserve_date_flg', 'string');
 
         return $schema;
     }
@@ -416,6 +420,14 @@ trait ReservationFormTrait
 
         $this->createUserEntity($data, $options);
         $this->createReservationEntity($data, $options);
+        if (
+            isset($data['reservations']['repeat_reservation'])
+            && $data['reservations']['validate_reserve_date_flg'] ===
+                (string)Configure::readOrFail('Master.common.flg.on')
+        ) {
+            $this->validateRepeatReservation($data['reservations']);
+        }
+
         if (!empty($this->getErrors())) {
             return false;
         }
@@ -513,19 +525,19 @@ trait ReservationFormTrait
             ],
         ], (array)$options);
 
+        // 繰り返し予約の場合、予約可能日をまだ取得していない場合
+        // 利用時間・利用開始時間が取得できない場合、複数日予約の予約日のバリデーションを行っていない場合
         if (
             $data
             && isset($reservationInputs['repeat_reservation'])
             && $reservationInputs['repeat_reservation'] === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
-            && !isset($reservationInputs['reserveDates'])
+            && !isset($reservationInputs['reserve_dates'])
             && isset($reservationInputs['usage_timestamp_from'])
             && isset($reservationInputs['usage_time'])
+            && !isset($reservationInputs['validate_reserve_date_flg'])
         ) {
             [$reservationInputs, $repeatReservationInputs] =
-                $this->createRepeatReservationData($reservationInputs, $entityOptions);
-
-            // 上記でsetReservationParameterを変更しているため戻す
-            $this->setReservationParameter($entityOptions['otherOptions']['parameters']);
+                $this->createRepeatReservationData($data, $entityOptions);
 
             if ($repeatReservationInputs) {
                 $this->createAndSetRepeatReservationEntity(
@@ -584,12 +596,13 @@ trait ReservationFormTrait
     /**
      * 繰り返し予約データの作成
      *
-     * @param array $reservationInputs 予約データ
+     * @param array $data 予約データ
      * @param array $entityOptions オプション
      * @return array
      */
-    public function createRepeatReservationData($reservationInputs, $entityOptions)
+    public function createRepeatReservationData($data, $entityOptions)
     {
+        $reservationInputs = $data['reservations'];
         $from = new FrozenTime($reservationInputs['usage_timestamp_from']);
         $time = $from->format('H:i');
         $to = new FrozenTime($reservationInputs['date_to'] . $time);
@@ -597,53 +610,48 @@ trait ReservationFormTrait
         $allDate = new DatePeriod($from, new DateInterval('P1D'), $to->addDay());
         $event = $this->getEventEntity();
 
+        $reservationInput = [];
         $repeatReservationInputs = [];
         if ($event) {
             foreach ($allDate as $date) {
-                // 曜日指定ありの場合
+                // 曜日指定がある場合、指定曜日の時のみ処理を実行
                 if ($reservationInputs['select_day_of_week']) {
                     if (!DateTimeUtility::isWithinWeekHoliday($date, (array)$reservationInputs['day_of_week'])) {
                         continue;
                     }
                 }
-                // 曜日指定がなかった場合
-                $usageTimeDate = $date->modify('+' . $reservationInputs['usage_time'] . 'minutes');// 予約枠分だけ
 
-                $eventTimetable = new EventTimetable($event, $date, $usageTimeDate, $this->isAdmin());
-                $eventTimetable->setLimitDisplayTime(true);
-                $eventTimetable->setLimitDisplayable(true);
-                $eventTimetable->setExcludeOverday(true);
                 $usageTimestampFrom = $date->format('Y/m/d H:i');
-                $this->setReservationParameter([
+
+                $reservationInput['reservations'] = $reservationInputs;
+                $reservationInput['reservations']['usage_timestamp_from'] = $usageTimestampFrom;
+                //　フラグセット
+                $reservationInput['reservations']['validate_reserve_date_flg'] =
+                    (string)Configure::read('Master.common.flg.on');
+
+                $reservationForm = new ReservationForm();
+                $reservationForm->setReservationParameter([
                     'event_id' => $entityOptions['otherOptions']['event']->get('id'),
                     'usage_timestamp_from' => $usageTimestampFrom,
                 ]);
 
-                // 元の在庫を計算
-                $eventTimetable->getTimetable();
-                $eventTimetable->createReservedTimetable(null, null, true);
-                $eventTimetable->applyReservation(
-                    $date,
-                    $usageTimeDate,
-                    (int)$reservationInputs['number'] - 1,
-                );
-                // 予約数からー１しているのは　残りの在庫数と同じだけ予約した場合、
-                // 下の$eventTimetable->canReserve($date, $usageTimeDate)で在庫が０だとfalseになってしまうため
-
                 if (
-                    $this->validateReservationParameter()
-                    && ($eventTimetable->hasTimetable())
-                    && !$eventTimetable->isOutOfStock(true)
-                    && $eventTimetable->canReserve($date, $usageTimeDate)
+                    $reservationForm->validateReservationParameter()
+                    && $reservationForm->validateReservation($reservationInput)
                 ) {
-                    $reservationInputs['reserveDates'][] = $usageTimestampFrom;
+                    $reservationInputs['reserve_dates'][] = $usageTimestampFrom;
                     $repeatReservationInput = $reservationInputs;
                     $repeatReservationInput['usage_timestamp_from'] = $usageTimestampFrom;
                     $repeatReservationInputs[] = $repeatReservationInput;
                 } else {
-                    $reservationInputs['canNotReserveDates'][] = $usageTimestampFrom;
+                    $reservationInputs['can_not_reserve_dates'][] = $usageTimestampFrom;
                 }
             }
+            if (!$reservationInputs['date_to']) {
+                 $this->validateRepeatReservation($reservationInputs);
+            }
+            //フラグ解除
+            $reservationInput['reservations']['validate_reserve_date_flg'] = null;
         }
 
         return [$reservationInputs, $repeatReservationInputs];
@@ -662,23 +670,167 @@ trait ReservationFormTrait
         /** @var \App\Model\Table\ReservationsTable $reservationsTable */
         $reservationsTable = $this->getTableLocator()->get('Reservations');
 
+        $repeatReservation = [];
+        $repeatReservationData = [];
         $i = 0;
         foreach ($repeatReservationInputs as $repeatReservationInput) {
             $entityOptions['otherOptions']['parameters']['usage_timestamp_from'] =
                 $repeatReservationInput['usage_timestamp_from'];
-            $repeatReservationInput['reserveDates'] = $reservationInputs['reserveDates'] ?? null;
-            $repeatReservationInput['canNotReserveDates'] = $reservationInputs['canNotReserveDates'] ?? null;
+            $repeatReservationInput['reserve_dates'] = $reservationInputs['reserve_dates'] ?? null;
+            $repeatReservationInput['can_not_reserve_dates'] = $reservationInputs['can_not_reserve_dates'] ?? null;
             $this->repeatReservationDataEntity =
                 $reservationsTable->newEntity($repeatReservationInput, $entityOptions);
             $entityErrors = $this->repeatReservationDataEntity->getErrors();
             if (empty($entityErrors)) {
                 $repeatReservation['reservations'] = $this->repeatReservationDataEntity->toArray();
                 $repeatReservationData[$i] = $repeatReservation;
-                $this->setData(array_merge($this->getData(), ['repeatReservations' => $repeatReservationData]));
-            } else {
-                $this->setErrors(Hash::merge($this->getErrors(), ['reservations' => $entityErrors]));
             }
             $i++;
+        }
+        $this->setData(array_merge($this->getData(), ['repeatReservations' => $repeatReservationData]));
+    }
+
+    /**
+     * 繰り返し予約のバリデーション
+     *
+     * @param array $data 予約データ
+     * @return void
+     */
+    public function validateRepeatReservation($data)
+    {
+        $validator = new Validator();
+
+        $types = array_map('strval', array_keys(Configure::readOrFail('Master.reservation.repeatReservationType')));
+        $validate_reserve_date_flg = !isset($data['validate_reserve_date_flg']);
+        $selectDayOfWeek = isset($data['select_day_of_week'])
+            && ($data['select_day_of_week'] === (string)Configure::readOrFail('Master.common.flg.on'));
+
+        $validator
+            ->requirePresence('repeat_reservation', true, __(Message::ERROR_NOT_EMPTY_SELECT))
+            ->allowEmptyString('repeat_reservation', __(Message::ERROR_NOT_EMPTY_SELECT), false)
+            ->add('repeat_reservation', [
+                'isScalar' => [
+                    'rule' => ['isScalar'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                ],
+                'inList' => [
+                    'rule' => ['inList', $types],
+                    'last' => true,
+                    'message' => __(Message::ERROR_IN_LIST),
+                ],
+                'canNotReserve' => [
+                    'rule' => function ($value, $context) {
+                        return !($value === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
+                            && empty($context['data']['reserve_dates']));
+                    },
+                    'last' => true,
+                    'message' => __(Message::ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM),
+                    'on' => function ($context) use ($validate_reserve_date_flg) {
+                        return $validate_reserve_date_flg;
+                    },
+                ],
+            ]);
+
+        $validator
+            ->requirePresence('date_to', true, __(Message::ERROR_NOT_EMPTY_SELECT))
+            ->notEmptyDate('date_to', __(Message::ERROR_NOT_EMPTY_SELECT))
+            ->add('date_to', [
+                'isScalar' => [
+                    'rule' => ['isScalar'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                ],
+                'date' => [
+                    'rule' => [
+                        'date',
+                        'ymd',
+                    ],
+                    'last' => true,
+                    'message' => __(Message::ERROR_DATE),
+                ],
+                'compareFields' => [
+                    'rule' => function ($value, $context) {
+                        $from = $context['data']['usage_timestamp_from'];
+                        $to = $value;
+                        $fromDate = new FrozenDate($from);
+                        $toDate = new FrozenDate($to);
+
+                        return $fromDate <= $toDate;
+                    },
+                    'last' => true,
+                    'message' => __(Message::ERROR_OVER_FROM_DATETIME),
+                ],
+                'withInOneYear' => [
+                    'rule' => function ($value, $context) {
+                        $from = $context['data']['usage_timestamp_from'];
+                        $to = $value;
+                        $fromDate = new FrozenDate($from);
+                        $toDate = new FrozenDate($to);
+                        $diff = $fromDate->diff($toDate)->days;
+
+                        return $diff < ReservationsTable::OVER_YEAR_DATES;
+                    },
+                    'last' => true,
+                    'message' => __(Message::ERROR_OVER_DAYS),
+                ],
+            ]);
+
+        $validator
+            ->requirePresence('select_day_of_week', false, __(Message::ERROR_NOT_EMPTY_SELECT))
+            ->allowEmptyString('select_day_of_week', __(Message::ERROR_NOT_EMPTY_SELECT), true)
+            ->add('select_day_of_week', [
+                'isScalar' => [
+                    'rule' => ['isScalar'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                ],
+                'inList' => [
+                    'rule' => ['inList', Configure::readOrFail('Master.common.flg')],
+                    'last' => true,
+                    'message' => __(Message::ERROR_IN_LIST),
+                ],
+            ]);
+
+        $validator
+            ->requirePresence(
+                'day_of_week',
+                function ($context) use ($selectDayOfWeek) {
+                    return isset($context['data']['select_day_of_week'])
+                        && $selectDayOfWeek;
+                },
+                __(Message::ERROR_NOT_EMPTY_SELECT)
+            )
+            ->notEmptyString(
+                'day_of_week',
+                __(Message::ERROR_NOT_EMPTY_SELECT),
+                function ($context) use ($selectDayOfWeek) {
+                    return isset($context['data']['select_day_of_week'])
+                        && $selectDayOfWeek;
+                }
+            )
+            ->add('day_of_week', [
+                'isScalar' => [
+                    'rule' => ['isScalar'],
+                    'last' => true,
+                    'message' => __(Message::ERROR_INVALID_VALUE),
+                    'on' => function ($context) use ($selectDayOfWeek) {
+                        return $selectDayOfWeek;
+                    },
+                ],
+                'inList' => [
+                    'rule' => ['inList', array_keys(Configure::readOrFail('Master.common.week'))],
+                    'last' => true,
+                    'message' => __(Message::ERROR_IN_LIST),
+                    'on' => function ($context) use ($selectDayOfWeek) {
+                        return $selectDayOfWeek;
+                    },
+                ],
+            ]);
+
+        $errors = $validator->validate($data);
+        if (!empty($errors)) {
+            $this->setErrors(Hash::merge($this->getErrors(), ['reservations' => $errors]));
         }
     }
 }

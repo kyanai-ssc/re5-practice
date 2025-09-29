@@ -48,7 +48,11 @@ class AppForm extends Form
         $this->filterInputs($result);
         $this->setData($result->getArrayCopy());
 
-        return parent::validate($this->getData());
+        if (!isset($data['reservations']['validate_reserve_date_flg'])) {
+            return parent::validate($this->getData());
+        } else {
+            return true;
+        }
     }
 
     /**

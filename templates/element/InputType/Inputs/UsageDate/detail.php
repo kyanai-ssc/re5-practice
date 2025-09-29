@@ -1,12 +1,14 @@
 <?php
 
-use \App\Model\Entity\Reservation;
+use App\Model\Entity\Reservation;
 use Cake\Core\Configure;
 ?>
 <?php $this->start('inputTypeUsageDateDetail'); ?>
 <div>
-    <?php if (isset($options['mode']) && ($options['mode'] === 'add' || $options['mode'] === 'edit')): ?>
+    <?php if(isset($options['mode']) && $options['mode'] !== 'addConf'): ?>
         <span class="txt fwb"><?= $this->Template->displayDayAndWeek($detailValue) ?></span>
+    <?php endif; ?>
+    <?php if (isset($options['mode']) && ($options['mode'] === 'add' || $options['mode'] === 'edit')): ?>
         <?= $this->element('InputType/Inputs/UsageDate/select_calendar', [
             'reservation' => $options['reservation'],
             'adminFlg' => $formItem->getInputTypeItem()->isAdmin(),
@@ -16,7 +18,6 @@ use Cake\Core\Configure;
             <div class="mgt-10" >
                 <?= $this->Template->radio('reservations.repeat_reservation', [
                     'type' => 'radio',
-                    // 'label' => false,
                     'options' => $valueOptions['repeatReservationType'],
                     'class' => ['js_change_repeat_reservation'],
                     'default' => (string)Reservation::RESERVATION_TYPE_ONE_RESERVATION,
@@ -56,7 +57,7 @@ use Cake\Core\Configure;
 
                      <?php
                         $selectDayOfWeekClass = 'hidden';
-                        if ($reservationForm->getData('reservations.select_day_of_week') === '1') {
+                        if ($reservationForm->getData('reservations.select_day_of_week') === (string)$this->Configure->readOrFail('Master.common.flg.on')) {
                             $selectDayOfWeekClass = '';
                         }
                     ?>
@@ -74,7 +75,7 @@ use Cake\Core\Configure;
 
 <?php if (isset($options['mode']) && ($options['mode'] === 'addConf')): ?>
     <!-- １回予約の場合表示 -->
-    <?php if ($options['reservation']->repeat_reservation === null || $options['reservation']->repeat_reservation === Reservation::RESERVATION_TYPE_ONE_RESERVATION): ?>
+    <?php if ($options['reservation']->repeat_reservation === null || $options['reservation']->repeat_reservation === (string)Reservation::RESERVATION_TYPE_ONE_RESERVATION): ?>
         <span class="txt fwb"><?= $this->Template->displayDayAndWeek($detailValue) ?></span>
     <?php else: ?>
     <!-- 複数日予約の場合表示 -->
@@ -90,15 +91,15 @@ use Cake\Core\Configure;
         <div class="mgt-10" >
             <p>予約日</p>
             <!-- 取得した日をループで表示 -->
-            <?php foreach ($options['reservation']['reserveDates'] as $reserveDay): ?>
+            <?php foreach ($options['reservation']['reserve_dates'] as $reserveDay): ?>
                 <p>・<?= $this->Template->displayDayAndWeek($reserveDay) ?><p>
             <?php endforeach; ?>
         </div>
-        <?php if ($options['reservation']->canNotReserveDates): ?>
+        <?php if ($options['reservation']->can_not_reserve_dates): ?>
             <div class="mgt-10">
                 <p>＊下記の日は予約できません。</p>
                 <!-- 取得した予約できない日をループで表示 -->
-                <?php foreach ($options['reservation']['canNotReserveDates'] as $canNotReserveDay): ?>
+                <?php foreach ($options['reservation']['can_not_reserve_dates'] as $canNotReserveDay): ?>
                     <p>・<?= $this->Template->displayDayAndWeek($canNotReserveDay) ?><p>
                 <?php endforeach; ?>
             </div>
