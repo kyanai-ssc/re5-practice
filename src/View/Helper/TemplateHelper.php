@@ -438,13 +438,13 @@ class TemplateHelper extends Helper
      * @param \App\Model\Entity\Reservation $reservationEntity reservationエンティティ
      * @return bool
      */
-    public function repeatReservation($userEntity, $reservationEntity)
+    public function isRepeatReservation($userEntity, $reservationEntity)
     {
         /** @var \App\Model\Table\ReservationVideoMeetingsTable $reservationVideoMeetingsTable */
         $reservationVideoMeetingsTable = $this->getTableLocator()->get('ReservationVideoMeetings');
 
         $result = false;
-        if ($userEntity->user_additions !== null) {
+        if (isset($userEntity->user_additions)) {
             foreach ($userEntity->user_additions as $addition) {
                 if ($addition->form_item_id === FormItem::ID_REPEAT_RESERVATION_FLG) {
                     if ($addition->value === FormItemChoice::REPEAT_RESERVATION_FLG_ON) {

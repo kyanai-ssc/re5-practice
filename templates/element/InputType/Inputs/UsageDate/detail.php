@@ -5,7 +5,7 @@ use Cake\Core\Configure;
 ?>
 <?php $this->start('inputTypeUsageDateDetail'); ?>
 <div>
-    <?php if(isset($options['mode']) && $options['mode'] !== 'addConf'): ?>
+    <?php if (!isset($options['mode']) || $options['mode'] !== 'addConf'): ?>
         <span class="txt fwb"><?= $this->Template->displayDayAndWeek($detailValue) ?></span>
     <?php endif; ?>
     <?php if (isset($options['mode']) && ($options['mode'] === 'add' || $options['mode'] === 'edit')): ?>
@@ -14,7 +14,7 @@ use Cake\Core\Configure;
             'adminFlg' => $formItem->getInputTypeItem()->isAdmin(),
         ]) ?>
         <!-- 繰り返し予約ができる条件 -->
-        <?php if ($options['mode'] === 'add' && $options['user'] && $this->Template->repeatReservation($options['user'], $options['reservation'])): ?>
+        <?php if ($options['mode'] === 'add' && $options['user'] && $this->Template->isRepeatReservation($options['user'], $options['reservation'])): ?>
             <div class="mgt-10" >
                 <?= $this->Template->radio('reservations.repeat_reservation', [
                     'type' => 'radio',
@@ -55,7 +55,7 @@ use Cake\Core\Configure;
                         ]) ?>
                     </div>
 
-                     <?php
+                    <?php
                         $selectDayOfWeekClass = 'hidden';
                         if ($reservationForm->getData('reservations.select_day_of_week') === (string)$this->Configure->readOrFail('Master.common.flg.on')) {
                             $selectDayOfWeekClass = '';
@@ -79,7 +79,7 @@ use Cake\Core\Configure;
         <span class="txt fwb"><?= $this->Template->displayDayAndWeek($detailValue) ?></span>
     <?php else: ?>
     <!-- 複数日予約の場合表示 -->
-    <span  class="txt fwb">
+        <span  class="txt fwb">
         <div>複数日予約</div>
         <div>期間：<?= $this->Template->displayDayAndWeek($detailValue) ?> ～ <?= $this->Template->displayDayAndWeek($options['reservation']->date_to) ?></div>
         <?php if ($options['reservation']->day_of_week !== null): ?>

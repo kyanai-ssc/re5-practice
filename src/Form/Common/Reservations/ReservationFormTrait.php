@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Form\Common\Reservations;
 
+use App\Form\Admin\Reservations\ReservationForm as AdminReservationForm;
 use App\Form\User\Reservations\ReservationForm;
 use App\Locale\Message;
 use App\Model\Entity\FormGroup;
@@ -624,12 +625,17 @@ trait ReservationFormTrait
 
                 $reservationInput['reservations'] = $reservationInputs;
                 $reservationInput['reservations']['usage_timestamp_from'] = $usageTimestampFrom;
+                $reservationInput['reservation_terms'] = $data['reservation_terms'];
                 //　フラグセット
                 $reservationInput['reservations']['validate_reserve_date_flg'] =
                     (string)Configure::read('Master.common.flg.on');
 
-                $reservationForm = new ReservationForm();
-                $reservationForm->adminFlg = $this->adminFlg;
+                if ($this->adminFlg) {
+                    $reservationForm = new AdminReservationForm();
+                } else {
+                    $reservationForm = new ReservationForm();
+                }
+
                 $reservationForm->setReservationParameter([
                     'event_id' => $entityOptions['otherOptions']['event']->get('id'),
                     'user_id' => $entityOptions['otherOptions']['user']->get('id'),
@@ -638,7 +644,7 @@ trait ReservationFormTrait
 
                 if (
                     $reservationForm->validateReservationParameter()
-                    && $reservationForm->validateReservation($reservationInput)
+                    && $reservationForm->validate($reservationInput)
                 ) {
                     $reservationInputs['reserve_dates'][] = $usageTimestampFrom;
                     $repeatReservationInput = $reservationInputs;
@@ -701,7 +707,6 @@ trait ReservationFormTrait
     {
         $validator = new Validator();
 
-        $types = array_map('strval', array_keys(Configure::readOrFail('Master.reservation.repeatReservationType')));
         $validate_reserve_date_flg = !isset($data['validate_reserve_date_flg']);
         $selectDayOfWeek = isset($data['select_day_of_week'])
             && ($data['select_day_of_week'] === (string)Configure::readOrFail('Master.common.flg.on'));
@@ -716,7 +721,7 @@ trait ReservationFormTrait
                     'message' => __(Message::ERROR_INVALID_VALUE),
                 ],
                 'inList' => [
-                    'rule' => ['inList', $types],
+                    'rule' => ['inList', array_keys(Configure::readOrFail('Master.reservation.repeatReservationType'))],
                     'last' => true,
                     'message' => __(Message::ERROR_IN_LIST),
                 ],
@@ -770,7 +775,7 @@ trait ReservationFormTrait
                         $toDate = new FrozenDate($to);
                         $diff = $fromDate->diff($toDate)->days;
 
-                        return $diff < ReservationsTable::OVER_YEAR_DATES;
+                        return $diff < ReservationForm::OVER_YEAR_DATES;
                     },
                     'last' => true,
                     'message' => __(Message::ERROR_OVER_DAYS),

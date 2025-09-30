@@ -91,8 +91,6 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
 
     public const CHARGE_MAX = 1000000000;
 
-    public const OVER_YEAR_DATES = 366;
-
     /**
      * 決済トラッキングID：MAX
      */

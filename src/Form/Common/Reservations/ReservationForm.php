@@ -17,6 +17,8 @@ abstract class ReservationForm extends AppForm
     use ConfirmTransitionTrait;
     use ReservationFormTrait;
 
+    public const OVER_YEAR_DATES = 366;
+
     /**
      * @inheritDoc
      */
