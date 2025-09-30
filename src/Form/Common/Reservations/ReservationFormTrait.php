@@ -604,8 +604,7 @@ trait ReservationFormTrait
     {
         $reservationInputs = $data['reservations'];
         $from = new FrozenTime($reservationInputs['usage_timestamp_from']);
-        $time = $from->format('H:i');
-        $to = new FrozenTime($reservationInputs['date_to'] . $time);
+        $to = new FrozenTime($reservationInputs['date_to']);
 
         $allDate = new DatePeriod($from, new DateInterval('P1D'), $to->addDay());
         $event = $this->getEventEntity();
@@ -614,7 +613,7 @@ trait ReservationFormTrait
         $repeatReservationInputs = [];
         if ($event) {
             foreach ($allDate as $date) {
-                // 曜日指定がある場合、指定曜日の時のみ処理を実行
+                // 曜日指定があり、$dateが指定曜日の場合のみ処理を実行
                 if ($reservationInputs['select_day_of_week']) {
                     if (!DateTimeUtility::isWithinWeekHoliday($date, (array)$reservationInputs['day_of_week'])) {
                         continue;
@@ -630,8 +629,10 @@ trait ReservationFormTrait
                     (string)Configure::read('Master.common.flg.on');
 
                 $reservationForm = new ReservationForm();
+                $reservationForm->adminFlg = $this->adminFlg;
                 $reservationForm->setReservationParameter([
                     'event_id' => $entityOptions['otherOptions']['event']->get('id'),
+                    'user_id' => $entityOptions['otherOptions']['user']->get('id'),
                     'usage_timestamp_from' => $usageTimestampFrom,
                 ]);
 
@@ -647,7 +648,7 @@ trait ReservationFormTrait
                     $reservationInputs['can_not_reserve_dates'][] = $usageTimestampFrom;
                 }
             }
-            if (!$reservationInputs['date_to']) {
+            if (!$repeatReservationInputs) {
                  $this->validateRepeatReservation($reservationInputs);
             }
             //フラグ解除

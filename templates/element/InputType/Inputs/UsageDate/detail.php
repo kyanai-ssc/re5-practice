@@ -104,7 +104,6 @@ use Cake\Core\Configure;
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
-        
     </span>
     <?php endif; ?>
 <?php endif; ?>
