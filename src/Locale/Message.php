@@ -825,4 +825,14 @@ class Message
      * フラッシュメッセージ：属性・権限不一致エラー
      */
     public const NO_EXIST_ATTRIBUTE_AUTHORITY_NAME = 'NO_EXIST_ATTRIBUTE_AUTHORITY_NAME';
+
+    /**
+     * 期間の範囲が366日以上
+     */
+    public const ERROR_OVER_DAYS = 'ERROR_OVER_DAYS';
+
+    /**
+     * 期間内で予約できる日がない
+     */
+    public const ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM = 'ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM';
 }

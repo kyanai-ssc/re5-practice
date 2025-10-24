@@ -4,9 +4,12 @@ declare(strict_types=1);
 namespace App\View\Helper;
 
 use App\Mailer\DefaultMailer;
+use App\Model\Entity\FormItem;
+use App\Model\Entity\FormItemChoice;
 use App\Utility\CommonData\CommonDataTrait;
 use App\Utility\DateTimeUtility;
 use Cake\Core\Configure;
+use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Hash;
 use Cake\View\Form\NullContext;
 use Cake\View\Helper;
@@ -19,12 +22,14 @@ use Cake\View\StringTemplateTrait;
  * @property \Cake\View\Helper\BreadcrumbsHelper $Breadcrumbs
  * @property \Cake\View\Helper\HtmlHelper $Html
  * @property \App\View\Helper\AuthorityHelper $Authority
+ * @property \App\View\Helper\SettingHelper $Setting
  * @property \App\View\Helper\TrHelper $Tr
  * @property \Cake\View\Helper\UrlHelper $Url
  */
 class TemplateHelper extends Helper
 {
     use CommonDataTrait;
+    use LocatorAwareTrait;
     use StringTemplateTrait;
 
     /**
@@ -32,7 +37,7 @@ class TemplateHelper extends Helper
      *
      * @var array
      */
-    public $helpers = ['Form', 'Breadcrumbs', 'Html', 'Authority', 'Tr', 'Url'];
+    public $helpers = ['Form', 'Breadcrumbs', 'Html', 'Authority', 'Tr', 'Url', 'Setting'];
 
     protected $_defaultConfig = [
         'prefix' => '',
@@ -424,5 +429,45 @@ class TemplateHelper extends Helper
             ),
             $options
         );
+    }
+
+    /**
+     * 繰り返し予約を表示する判定
+     *
+     * @param \App\Model\Entity\User $userEntity userエンティティ
+     * @param \App\Model\Entity\Reservation $reservationEntity reservationエンティティ
+     * @return bool
+     */
+    public function isRepeatReservation($userEntity, $reservationEntity)
+    {
+        /** @var \App\Model\Table\ReservationVideoMeetingsTable $reservationVideoMeetingsTable */
+        $reservationVideoMeetingsTable = $this->getTableLocator()->get('ReservationVideoMeetings');
+
+        $result = false;
+        if (isset($userEntity->user_additions)) {
+            foreach ($userEntity->user_additions as $addition) {
+                if ($addition->form_item_id === FormItem::ID_REPEAT_RESERVATION_FLG) {
+                    if ($addition->value === FormItemChoice::REPEAT_RESERVATION_FLG_ON) {
+                        $result = true;
+                    }
+                }
+            }
+        }
+
+        if (!$result) {
+            return false;
+        }
+
+        if (
+            !$this->Setting->getSystemSetting()
+                ->get('reservation_continuous_flg') === Configure::read('Master.common.flg.off')
+            || $userEntity->isGuest()
+            || $reservationEntity->displayQrCode()
+            || $reservationVideoMeetingsTable->shouldProcessOnReserve($reservationEntity)
+        ) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -1369,6 +1369,8 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
             'receptionStatusId' => $receptionStatusesTable->getValueOptions(),
             'paymentMethodId' => $paymentMethodsTable->getValueOptions(),
             'paymentStatusId' => $paymentStatusesTable->getValueOptions(),
+            'repeatReservationType' => Configure::readOrFail('Master.reservation.repeatReservationType'),
+            'week' => Configure::readOrFail('Master.common.week'),
         ];
 
         return $fieldValueOptions;

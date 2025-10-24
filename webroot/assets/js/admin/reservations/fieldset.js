@@ -197,6 +197,16 @@
             toggleReservationCharge();
         });
 
+        // 繰り返し予約選択変更
+        $(document).on('change', '.js_change_repeat_reservation', function (event) {
+            app.common.repeatReservation.changeRepeatReservation();
+        });
+
+        // 繰り返し予約曜日選択変更
+        $(document).on('change', '.js_select_day_of_week', function (event) {
+            app.common.repeatReservation.selectDayOfWeek();
+        });
+
         settingForm();
     });
 })(window, jQuery, window.app);

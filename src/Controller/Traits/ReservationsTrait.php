@@ -4,7 +4,10 @@ declare(strict_types=1);
 namespace App\Controller\Traits;
 
 use App\Locale\Message;
+use App\Model\Entity\Reservation;
+use App\Model\Table\ReservationsTable;
 use Cake\Http\Exception\BadRequestException;
+use Cake\Utility\Hash;
 
 /**
  * Reservations trait.
@@ -110,10 +113,36 @@ trait ReservationsTrait
             if ($reservationForm->execute((array)$reservationInputs)) {
                 if ($this->TokenValidation->validate($tokenKey)) {
                     $continuousKey = $reservationForm->getContinuousParameter('key');
-                    $this->getRequest()->getSession()->write('reservations.add.continuousData.' . $continuousKey, [
-                        'parameter' => $reservationForm->getReservationParameter(),
-                        'data' => $reservationForm->getData(),
-                    ]);
+                    if (
+                        isset($reservationInputs['reservations']['repeat_reservation'])
+                        && $reservationInputs['reservations']['repeat_reservation'] ===
+                             (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
+                    ) {
+                        $repeatReservations = $reservationForm->getData('repeatReservations') ?? null;
+                        if ($repeatReservations) {
+                            foreach ($repeatReservations as $continuousKey => $data) {
+                                $reservationForm->setReservationParameter(
+                                    [
+                                        'reservation_type' => ReservationsTable::RESERVATION_TYPE_EXISTING_USER,
+                                        'user_id' => Hash::get($data, 'reservations.user_id'),
+                                        'event_id' => Hash::get($data, 'reservations.event_id'),
+                                        'usage_timestamp_from' =>
+                                            Hash::get($data, 'reservations.usage_timestamp_from')->format('Y/m/d H:i'),
+                                    ]
+                                );
+                                $this->getRequest()->getSession()
+                                    ->write('reservations.add.continuousData.' . $continuousKey, [
+                                        'parameter' => $reservationForm->getReservationParameter(),
+                                        'data' => $data,
+                                    ]);
+                            }
+                        }
+                    } else {
+                        $this->getRequest()->getSession()->write('reservations.add.continuousData.' . $continuousKey, [
+                            'parameter' => $reservationForm->getReservationParameter(),
+                            'data' => $reservationForm->getData(),
+                        ]);
+                    }
                     $userEntity = $reservationForm->getReservationEntity()->getUserEntity();
                     if (isset($userEntity) && $userEntity->isDirty('password')) {
                         $this->getRequest()->getSession()->write(

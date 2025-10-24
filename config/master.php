@@ -30,6 +30,7 @@ use App\Model\Entity\PaymentSetting;
 use App\Model\Entity\PaymentStatus;
 use App\Model\Entity\RecaptchaSetting;
 use App\Model\Entity\ReceptionStatus;
+use App\Model\Entity\Reservation;
 use App\Model\Entity\ReservationPayment;
 use App\Model\Entity\ReservationSmartLock;
 use App\Model\Entity\ReservationStatus;
@@ -957,6 +958,10 @@ return [
                 AbstractCalendarPopup::TYPE_SINGLE_DATE_TIMETABLE => 'SingleDateTimetablePopup',
                 AbstractCalendarPopup::TYPE_MULTIPLE_DATE_TIMETABLE => 'MultipleDateTimetablePopup',
             ],
+            'repeatReservationType' => [
+                Reservation::RESERVATION_TYPE_ONE_RESERVATION => '１回予約',
+                Reservation::RESERVATION_TYPE_REPEAT_RESERVATION => '複数日予約',
+            ]
         ],
         // 受付
         'reception' => [

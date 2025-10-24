@@ -749,6 +749,41 @@ window.app = {};
         payment: {
             // トークン取得
             getToken: function (setting, data) {}
+        },
+
+        // 連続予約：曜日選択表示の制御
+        toggleSelectDayOfWeek: function() {
+            if ($('.js_select_day_of_week').prop('checked')) {
+                $('.js_day_of_week').show();
+            } else {
+                $('.js_day_of_week').hide();
+            }
+        },
+
+        // 繰り返し予約
+        repeatReservation:{
+            // 繰り返し予約選択変更
+            changeRepeatReservation: function() {
+                $('.js_toggle_repeat_reservation').removeClass('hidden');
+                $('.js_toggle_repeat_reservation').hide();
+                $('.js_toggle_repeat_reservation_' + $('.js_change_repeat_reservation:checked').val()).show();
+                if ($('.js_select_day_of_week').prop('checked')) {
+                    $('.js_day_of_week').show();
+                } else {
+                    $('.js_day_of_week').hide();
+                }
+            },
+
+            // 繰り返し予約曜日選択変更
+            selectDayOfWeek: function() {
+                if ($('.js_select_day_of_week').prop('checked')) {
+                    $('.js_day_of_week').show();
+                } else {
+                    $('.js_day_of_week').hide();
+                }
+                $('.js_day_of_week').removeClass('hidden').hide();
+                $('.js_day_of_week_' + $('.js_select_day_of_week:checked').val()).show();
+            }
         }
     };
 

@@ -57,6 +57,16 @@ class Reservation extends AppEntity
     public const NO_CHARGE_MULTIPLIER = 1;
 
     /**
+     * 利用日：１回予約
+     */
+    public const RESERVATION_TYPE_ONE_RESERVATION = 1;
+
+    /**
+     * 利用日：複数日予約
+     */
+    public const RESERVATION_TYPE_REPEAT_RESERVATION = 2;
+
+    /**
      * @inheritDoc
      */
     protected $_accessible = [
@@ -96,6 +106,14 @@ class Reservation extends AppEntity
         'reservation_smart_lock' => false,
         'payment_tracking_id' => true,
         'after_redirect_payment_flg' => false,
+        'reservation_type' => true,
+        'repeat_reservation' => true,
+        'date_to' => true,
+        'select_day_of_week' => true,
+        'day_of_week' => true,
+        'reserve_dates' => true,
+        'can_not_reserve_dates' => true,
+        'validate_reserve_date_flg' => false,
     ];
 
     /**
