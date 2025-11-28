@@ -15,6 +15,7 @@ use Cake\Event\EventInterface;
  * Events Controller
  *
  * @property \App\Controller\Component\ImportComponent $Import
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class EventsController extends AdminAppController
 {

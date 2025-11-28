@@ -44,3 +44,4 @@
 
 
 <?= $this->Form->end() ?>
+<?= $this->element('Common/file_form') ?>

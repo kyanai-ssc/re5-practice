@@ -854,5 +854,32 @@ return [
                 'time' => 10,
             ],
         ],
+        //ファイルタイプ
+        'file' => [
+            'maxFileSize' => 10,
+            'extension' => [
+                'jpeg',
+                'jpg',
+                'pdf',
+                'HEIC',
+                'tiff',
+                'png',
+                'gif',
+                'psd',
+            ],
+            'mimeType' => [
+                'image/jpeg',
+                'application/pdf',
+                'image/heic',
+                'image/tiff',
+                'image/png',
+                'image/gif',
+                'image/vnd.adobe.photoshop',
+            ],
+            'separateDirectoryNumber' => 1000,
+            'defaultIndex' => 0,
+            'uploadFileName' => 'form_upload.',
+            'firstFileDirectory' => 1,
+        ]
     ],
 ];

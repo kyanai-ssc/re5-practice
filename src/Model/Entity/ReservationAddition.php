@@ -38,4 +38,30 @@ class ReservationAddition extends AppEntity
     ];
 
     protected $_virtual = ['data'];
+
+    /**
+     * @var \App\Model\Entity\Reservation
+     */
+    protected $reservationEntity;
+
+    /**
+     * 予約のエンティティーを設定
+     *
+     * @param \App\Model\Entity\Reservation $reservationEntity エンティティー
+     * @return void
+     */
+    public function setReservationEntity(Reservation $reservationEntity)
+    {
+        $this->reservationEntity = $reservationEntity;
+    }
+
+    /**
+     * 予約のエンティティーを取得
+     *
+     * @return \App\Model\Entity\Reservation|null エンティティー
+     */
+    public function getReservationEntity()
+    {
+        return $this->reservationEntity;
+    }
 }

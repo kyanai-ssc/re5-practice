@@ -325,6 +325,13 @@ class FormItem extends AppEntity
     public const INPUT_TYPE_AKERUN_USER_ID = 41;
 
     /**
+     * 入力タイプ ファイル
+     *
+     * @var int
+     */
+    public const INPUT_TYPE_FILE = 42;
+
+    /**
      * 必須フラグ 任意
      *
      * @var int

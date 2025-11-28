@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Component;
 
 use App\Utility\ArrayUtility;
+use App\Utility\FileUtility;
 use Cake\Controller\Component;
 use Cake\Core\Exception\CakeException;
 use Cake\Utility\Hash;
@@ -199,5 +200,54 @@ class FileUploadComponent extends Component
         $this->set($key, $data);
 
         return $data;
+    }
+
+    /**
+     * セッションに一時アップロードファイルを追加し、既にある一時アップロードファイルは削除
+     *
+     * @param string $key キー
+     * @param array $data セッション情報
+     * @return void
+     */
+    public function addTmpFileSession(string $key, array $data)
+    {
+        $file = $this->getOldTmpFile($key);
+        $this->getController()->getRequest()->getSession()->write($key, $data);
+
+        // 一時アップロードされていたファイルをディレクトリから削除
+        if (isset($file['file'])) {
+            FileUtility::deleteFile($file['file']);
+        }
+    }
+
+    /**
+     * セッションに保存されている一時アップロードファイルの情報を取得
+     *
+     * @param string $key キー
+     * @return array ファイル情報
+     */
+    public function getOldTmpFile(string $key)
+    {
+        $file = $this->getController()->getRequest()->getSession()->read($key);
+        if ($file) {
+            return $file;
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * 一時アップロードファイルを削除
+     *
+     * @param array $files ファイル
+     * @return void
+     */
+    public function deleteTempFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            if (isset($file['file'])) {
+                FileUtility::deleteFile($file['file']);
+            }
+        }
     }
 }

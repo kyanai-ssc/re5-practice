@@ -1033,6 +1033,7 @@ return [
                 FormItem::INPUT_TYPE_VIDEO_MEETING_PASSWORD => '【ビデオ会議】パスワード',
                 FormItem::INPUT_TYPE_EXPIRATION_DATE => '有効期間',
                 FormItem::INPUT_TYPE_AKERUN_USER_ID => 'AkerunユーザーID',
+                FormItem::INPUT_TYPE_FILE => 'ファイル',
             ],
             // 入力タイプクラス
             'inputTypeClass' => [
@@ -1077,6 +1078,7 @@ return [
                 FormItem::INPUT_TYPE_VIDEO_MEETING_PASSWORD => 'VideoMeetingPassword',
                 FormItem::INPUT_TYPE_EXPIRATION_DATE => 'ExpirationDate',
                 FormItem::INPUT_TYPE_AKERUN_USER_ID => 'AkerunUserId',
+                FormItem::INPUT_TYPE_FILE => 'File',
             ],
             // 必須
             'requiredFlg' => [
@@ -1768,6 +1770,13 @@ return [
                 'off' => '連携なし',
             ],
         ],
+        //添付ファイル      
+        'attachedFile' => [
+            'search' => [
+                'on' => '添付あり',
+                'off' => '添付なし',
+            ],
+        ],
         // 利用許可画面のパターン設定
         'adminAuthority' => [
             'selectAll' => [
@@ -1875,6 +1884,8 @@ return [
                     'Reservations_sample',
                     'Reservations_cancel',
                     'Reservations_downloadChecked',
+                    'AttachmentFile_downloadFile',
+                    'AttachmentFile_downloadSavedFile',
                 ],
                 // 顧客一覧利用
                 'Users_list' => [

@@ -6,6 +6,7 @@ namespace App\Controller\Traits;
 use App\Locale\Message;
 use App\Model\Entity\Reservation;
 use App\Model\Table\ReservationsTable;
+use Cake\Core\Configure;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Utility\Hash;
 
@@ -14,6 +15,8 @@ use Cake\Utility\Hash;
  */
 trait ReservationsTrait
 {
+    use FileTrait;
+
     /**
      * Calendar action
      *
@@ -90,6 +93,7 @@ trait ReservationsTrait
             throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
         }
         $continuousKey = $reservationForm->getContinuousParameter('key');
+        $continuousData = $reservationForm->getContinuousParameter('data');
 
         // 予約パラメータチェック
         if ($this->getRequest()->getQuery('input') === 'back') {
@@ -107,9 +111,31 @@ trait ReservationsTrait
             throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
         }
 
+        if ($continuousData && !isset($continuousKey)) {
+            $keys = array_keys($continuousData);
+            $index = (int)max($keys ?: [0]) + 1;
+        } elseif (isset($continuousKey)) {
+            $index = (int)$continuousKey;
+        } else {
+            $index = Configure::readOrFail('Setting.file.defaultIndex');
+        }
+        $fileSessionKey = $this->makeFileSessionKey($index);
+
+        $fileSession = $this->request->getSession()->read($fileSessionKey);
+
         if ($this->getRequest()->is('post')) {
             // 入力チェック
             $reservationInputs = $this->getRequest()->getData();
+            $this->makeNewfileSession($index);
+            $fileSession = $this->request->getSession()->read($fileSessionKey);
+
+            if ($fileSession) {
+                foreach ($fileSession as $key => $data) {
+                    $reservationInputs['reservations']['addition_values']['item_' . $key] = $data['original_file_name'];
+                }
+            }
+            $reservationForm->setFileSession($fileSession);
+
             if ($reservationForm->execute((array)$reservationInputs)) {
                 if ($this->TokenValidation->validate($tokenKey)) {
                     $continuousKey = $reservationForm->getContinuousParameter('key');
@@ -169,12 +195,21 @@ trait ReservationsTrait
             }
             $this->setRequestData($reservationForm->getData());
         } else {
+            if ($this->getRequest()->getQuery('input') !== 'back') {
+                $this->request->getSession()->delete('file.tmp.add');
+                $this->request->getSession()->delete('file.delete.add');
+                if (!isset($continuousKey) && $index === Configure::readOrFail('Setting.file.defaultIndex')) {
+                    $this->request->getSession()->delete('file.add.' . $index);
+                }
+            }
+
             // エンティティ初期化
             $reservationInputs = [];
             if ($this->getRequest()->getQuery('input') === 'back') {
                 $reservationInputs = $this->getRequest()->getSession()->read(
                     'reservations.add.continuousData.' . $continuousKey . '.data'
                 );
+                $reservationForm->setFileSession($fileSession);
             }
             $reservationForm->initializeReservationEntity($reservationInputs);
         }
@@ -229,6 +264,22 @@ trait ReservationsTrait
             'parameter' => $this->getRequest()->getSession()->read('reservations.add.continuousParameter'),
             'data' => $this->getRequest()->getSession()->read('reservations.add.continuousData'),
         ]);
+
+        $continuousKey = $continuousForm->getContinuousParameter('key');
+        if (isset($continuousKey) && (!is_scalar($continuousKey) || ((string)$continuousKey) === '')) {
+            throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
+        }
+
+        if ($continuousKey) {
+            $index = (int)$continuousKey;
+        } else {
+            $index = Configure::readOrFail('Setting.file.defaultIndex');
+        }
+
+        $fileSessionKey = $this->makeFileSessionKey($index);
+        $fileSession = $this->request->getSession()->read($fileSessionKey);
+        $continuousForm->setFileSession($fileSession, $index);
+
         if (!$continuousForm->validateContinuousParameter()) {
             throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
         }
@@ -245,6 +296,7 @@ trait ReservationsTrait
                         'paymentTokens' => $continuousForm->getPaymentTokens(),
                         'saveOperation' => $saveOperation,
                         'kycValues' => $kycValues,
+                        'upload' => $this->request->getSession()->read('file.add'),
                     ];
                     if ($reservationsTable->saveMany($continuousForm->getReservationEntities(), $saveOptions)) {
                         // 登録に失敗したデータを保持
@@ -257,6 +309,9 @@ trait ReservationsTrait
                         } else {
                             $this->getRequest()->getSession()->delete('reservations.add');
                         }
+
+                        // 登録に失敗した予約以外の一時ファイルとファイルセッションを削除
+                        $this->afterSaveTmpFileDelete($continuousData);
 
                         // ビデオ会議連携のエラーメッセージ
                         foreach ($reservationVideoMeetingsTable->flushErrorMessages() as $message) {
@@ -392,9 +447,39 @@ trait ReservationsTrait
             throw new BadRequestException(Message::ERROR_ILLEGAL_TRANSITION);
         }
 
+        $index = Configure::readOrFail('Setting.file.defaultIndex');
+
+        if (!$this->getRequest()->is('post') && $this->getRequest()->getQuery('input') !== 'back') {
+            $this->request->getSession()->delete('file.tmp.edit.' . $index);
+            $this->request->getSession()->delete('file.edit.' . $index);
+            $this->request->getSession()->delete('file.delete.edit.' . $index);
+        }
+
+        $fileSessionKey = $this->makeEditFileSessionKey($index);
+        $fileSession = $this->request->getSession()->read($fileSessionKey);
+
         if ($this->getRequest()->is('post')) {
             // 入力チェック
             $reservationInputs = $this->getRequest()->getData();
+            $additionValues = $this->makeNewfileSessionAndReservationInputs($reservationForm, $index);
+
+            if (!isset($reservationInputs['reservations']['addition_values'])) {
+                $reservationInputs['reservations']['addition_values'] = [];
+            }
+
+            $reservationInputs['reservations']['addition_values'] = array_merge(
+                $reservationInputs['reservations']['addition_values'],
+                $additionValues ?? []
+            );
+
+            $fileSession = $this->request->getSession()->read('file.edit.' . $index);
+            if ($fileSession) {
+                foreach ($fileSession as $key => $data) {
+                    $reservationInputs['reservations']['addition_values']['item_' . $key] = $data['original_file_name'];
+                }
+            }
+
+            $reservationForm->setFileSession($fileSession);
             if ($reservationForm->execute((array)$reservationInputs)) {
                 if ($this->TokenValidation->validate($tokenKey . '_' . $id)) {
                     $this->getRequest()->getSession()->write('reservations.edit.' . $id, [
@@ -424,6 +509,7 @@ trait ReservationsTrait
             $reservationInputs = [];
             if ($this->getRequest()->getQuery('input') === 'back') {
                 $reservationInputs = $this->getRequest()->getSession()->read('reservations.edit.' . $id . '.data');
+                $reservationForm->setFileSession($fileSession);
             }
             $reservationForm->initializeReservationEntity($reservationInputs);
         }
@@ -477,6 +563,12 @@ trait ReservationsTrait
         $reservationForm->setReservationParameter(
             (array)$this->getRequest()->getSession()->read('reservations.edit.' . $id . '.parameter')
         );
+
+        $index = Configure::readOrFail('Setting.file.defaultIndex');
+        $fileSessionKey = $this->makeEditFileSessionKey($index);
+        $fileSession = $this->request->getSession()->read($fileSessionKey);
+
+        $reservationForm->setFileSession($fileSession);
         if (!$reservationForm->validateReservationParameter()) {
             $errors = $reservationForm->getErrors();
             if (isset($errors['reservations']['event_error'])) {
@@ -494,9 +586,22 @@ trait ReservationsTrait
                         'mailSendFlg' => $mailSendFlg,
                         'saveOperation' => $saveOperation,
                         'forEdit' => true,
+                        'upload' => $fileSessions = $this->request->getSession()->read('file.edit'),
                     ];
+
+                    // 連続予約登録のファイルアップロード処理を流用しているためキーをセットしておく
+                    $reservationForm->getReservationEntity()->set(
+                        'continuous_key',
+                        Configure::readOrFail('Setting.file.defaultIndex')
+                    );
                     if ($reservationsTable->save($reservationForm->getReservationEntity(), $saveOptions)) {
                         $this->getRequest()->getSession()->delete('reservations.edit.' . $id);
+                        if (isset($fileSessions)) {
+                            foreach ($fileSessions as $fileSession) {
+                                $this->FileUpload->deleteTempFiles($fileSession);
+                            }
+                        }
+                        $this->getRequest()->getSession()->delete('file.edit');
 
                         // ビデオ会議連携のエラーメッセージ
                         foreach ($reservationVideoMeetingsTable->flushErrorMessages() as $message) {

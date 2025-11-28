@@ -16,6 +16,8 @@ use Cake\Utility\Hash;
  */
 trait AjaxReservationsTrait
 {
+    use FileTrait;
+
     /**
      * Calendar action
      *
@@ -315,6 +317,16 @@ trait AjaxReservationsTrait
             throw new BadRequestException();
         }
 
+        if ($continuousKey) {
+            $index = $continuousKey;
+        } else {
+            $index = Configure::readOrFail('Setting.file.defaultIndex');
+        }
+
+        $fileSessionKey = $this->makeFileSessionKey($index);
+        $fileSession = $this->request->getSession()->read($fileSessionKey);
+        $reservationForm->setFileSession($fileSession, $index);
+
         $reservationForm->setConfirm(true);
         $reservationForm->setContinuousParameter([
             'key' => $continuousKey,
@@ -365,6 +377,12 @@ trait AjaxReservationsTrait
             $this->getRequest()->getSession()->delete('reservations.add');
         }
 
+        $sessionKey = 'file.add.' . $continuousKey;
+        $files = $this->getRequest()->getSession()->read($sessionKey);
+        // 削除した予約のアップロードファイルを削除する
+        $this->FileUpload->deleteTempFiles($files);
+        $this->getRequest()->getSession()->delete($sessionKey);
+
         $reloadKey = null;
         if ((string)$currentContinuousKey !== '' && ((string)$currentContinuousKey) !== ((string)$continuousKey)) {
             $reloadKey = $currentContinuousKey;
@@ -388,7 +406,9 @@ trait AjaxReservationsTrait
         if (!$this->getRequest()->getSession()->check('reservations.add')) {
             throw new BadRequestException();
         }
-
+        // 連続予約で一時アップロードしていたファイルを削除する
+        $this->removeAttachTmpFile();
         $this->getRequest()->getSession()->delete('reservations.add');
+        $this->getRequest()->getSession()->delete('file.add');
     }
 }

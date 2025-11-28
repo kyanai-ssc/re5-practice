@@ -20,6 +20,7 @@ abstract class ContinuousForm extends AppForm
     use CommonFormTrait;
     use ConfirmTransitionTrait;
     use ContinuousTrait;
+    use FileTrait;
 
     /**
      * @var int|null

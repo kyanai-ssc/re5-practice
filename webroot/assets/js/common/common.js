@@ -784,7 +784,71 @@ window.app = {};
                 $('.js_day_of_week').removeClass('hidden').hide();
                 $('.js_day_of_week_' + $('.js_select_day_of_week:checked').val()).show();
             }
-        }
+        },
+        // 添付ファイルのアップロード
+        fileUpload: function (target) {
+            const data = new FormData($($('.js_attachment_form_html').val()).get(0));
+            data.append("file", $(target).prop("files")[0]);
+            var container = $(target).closest('.js_file_container');
+            var formItemId = $(target).data('id');
+            var continuousKey = $(target).data('key');
+            data.append("continuous_key", continuousKey);
+            data.append("form_item_id", formItemId);
+
+            ajax.url = $(target).data('url');
+            ajax.type = 'post';
+            ajax.data = data;
+            ajax.contentType = false;
+            ajax.processData = false;
+
+            app.common.ajax('file_upload', ajax).done(function (result) {
+                container.html(result.html);
+            }).fail(function (error) {
+                app.common.errorDialog(error);
+            });
+
+        },
+
+        tmpFileDelete: function (target) {
+            var title = $(target).closest('.js_remove_file_input').data('confirm-title');
+            var message = $(target).closest('.js_remove_file_input').data('confirm-message');
+            var html = $(target).closest('.js_remove_file_input').data('confirm-html');
+            var tmpFileStr = $(target).closest('.js_remove_file_input').attr('data-file');
+            var tmpFile = tmpFileStr ? JSON.parse(tmpFileStr) : {};
+            var container = $(target).closest('.js_file_container');
+            var token = $('input[name="_tokenValidation"]').val();
+
+            var postBody = {
+                continuous_key: tmpFile.continuous_key,
+                form_item_id: tmpFile.form_item_id,
+                _tokenValidation: token,
+            };
+
+            app.common.confirmDialog(message, title, html).done(function (dialog) {
+                app.common.ajax('deleteTmpFile', {
+                    url: $(target).data('url'),
+                    type: 'post',
+                    data: postBody,
+                }).done(function (result) {
+                    container.html(result.html);
+                }).fail(function (error) {
+                    app.common.errorDialog(error);
+                });
+            });
+        },
+
+        attachmentFile: function () {
+            // 添付ファイルのアップロード
+             $(document).on('change.uploadFile', '.js_reservation_file_upload', function (event) {
+                app.common.fileUpload(event.target);
+                event.preventDefault();
+            });
+            // 一時アップロードファイル削除
+            $(document).on('click.removeFileInput', '.js_remove_file_input', function (event) {
+                app.common.tmpFileDelete(event.target);
+                event.preventDefault();
+            });
+        },
     };
 
     $(function () {

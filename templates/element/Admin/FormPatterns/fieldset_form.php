@@ -140,6 +140,7 @@ use App\Model\Entity\FormPatternDisplayType;
         && $form->input_type !== formItem::INPUT_TYPE_PASSWORD_CONFIRM
         && $form->input_type !== formItem::INPUT_TYPE_EXPIRATION_DATE
         && $form->input_type !== formItem::INPUT_TYPE_AKERUN_USER_ID
+        && $form->input_type !== formItem::INPUT_TYPE_FILE
     ) :?>
         <?= $this->Template->checkbox($fieldPrefix . 'form_pattern_display_types.' . $key . '.app_display_flg', [
             'type' => 'checkbox',

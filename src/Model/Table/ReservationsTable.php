@@ -11,6 +11,7 @@ use App\Model\Entity\AdminSearchItem;
 use App\Model\Entity\AutoReplyMail;
 use App\Model\Entity\Event as EventEntity;
 use App\Model\Entity\FormGroup;
+use App\Model\Entity\FormItem;
 use App\Model\Entity\PaymentMethod;
 use App\Model\Entity\PaymentSetting;
 use App\Model\Entity\PaymentStatus;
@@ -26,11 +27,14 @@ use App\Model\EventCalendar\CalendarPopupFactory;
 use App\Model\EventCalendar\CalendarTypeFactory;
 use App\Model\ImportableTableInterface;
 use App\Model\InputType\Item\Type\AdditionTypeInterface;
+use App\Model\InputType\Item\Type\FileUploadInterface;
 use App\Model\InputType\Item\Type\InputInterface;
 use App\Model\InputType\Item\Type\OptionTypeInterface;
+use App\Model\Table\Traits\FileUploadTrait;
 use App\Model\Table\Traits\PaymentTrait;
 use App\Utility\ArrayUtility;
 use App\Utility\DateTimeUtility;
+use App\Utility\FileUtility;
 use App\Utility\QrCodeUtility;
 use App\Utility\SmartLock\SmartLockLinkage;
 use App\Utility\StringUtility;
@@ -79,6 +83,7 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
 {
     use MailerAwareTrait;
     use PaymentTrait;
+    use FileUploadTrait;
 
     public const RESERVATION_TYPE_EXISTING_USER = 1;
     public const RESERVATION_TYPE_NEW_USER = 2;
@@ -175,6 +180,7 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
             'foreignKey' => 'reservation_id',
             'dependent' => true,
         ]);
+        $this->addBehavior('FileUpload');
     }
 
     /**
@@ -4027,6 +4033,8 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
             }
         }
 
+        $oldAdditions = $entity->getOriginal('addition_values');
+
         try {
             $result = $this->getConnection()->transactional(function () use (
                 $entity,
@@ -4215,6 +4223,11 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
         if (!empty($entity->getError('payment_error'))) {
             // 決済エラー加算
             $this->addPaymentError();
+        }
+
+        // 予約編集で置き換わったファイルの削除
+        if (isset($oldEntity) && $result) {
+            $this->deleteFileFormUpload($entity, $oldAdditions);
         }
 
         // メール送信
@@ -4658,6 +4671,7 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
         $excludeUserData = Hash::get($options, 'excludeUserData', false);
         $isConfirm = Hash::get($options, 'isConfirm', false);
         $isApp = Hash::get($options, 'isApp', false);
+        $reservation = Hash::get($options, 'reservation');
 
         // フォームパターン表示タイプ取得
         $formPatternDisplayTypes = $formPatternDisplayTypesTable->find('formCreating', [
@@ -4692,6 +4706,9 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
                         'userAuthorityId' => $userAuthorityId,
                     ] + $options);
                 $formItem->getInputTypeItem()->settingDisplayType($formPatternDisplayType);
+                if ((int)$formItem->input_type === FormItem::INPUT_TYPE_FILE) {
+                    $formItem->getInputTypeItem()->setReservationEntity($reservation);
+                }
                 if (!$formItem->getInputTypeItem()->canDisplay()) {
                     unset($formItems[$formItemIndex]);
                 }
@@ -7181,5 +7198,67 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
         ]);
 
         return $query;
+    }
+
+    /**
+     * ファイルアップロード項目更新でのファイル削除
+     *
+     * @param \Cake\Datasource\EntityInterface $entity エンティティ
+     * @param array $oldAdditions 変更前の追加項目登録値
+     * @return void
+     */
+    public function deleteFileFormUpload(EntityInterface $entity, array $oldAdditions)
+    {
+        /** @var \App\Model\Table\FormItemsTable $formItemsTable */
+        $formItemsTable = $this->getTableLocator()->get('FormItems');
+
+        $uploadItems = [];
+        foreach ($formItemsTable->getFormItems(FormGroup::FORM_TYPE_RESERVATION) as $index => $formItem) {
+            if ($formItem->getInputTypeItem() instanceof FileUploadInterface) {
+                $uploadItems[$index] = $formItem;
+            }
+        }
+
+        $oldFiles = [];
+        foreach (array_keys($uploadItems) as $itemId) {
+            $value = Hash::get($oldAdditions, 'item_' . $itemId);
+            if (isset($value)) {
+                $oldFiles[$itemId] = $value;
+            }
+        }
+
+        $newFiles = [];
+        foreach ((array)$entity->get('reservation_additions') as $addition) {
+            if (isset($uploadItems[$addition->get('form_item_id')])) {
+                $newFiles[$addition->form_item_id] = $addition->get('value');
+            }
+        }
+
+        $deletingFiles = [];
+        foreach ($oldFiles as $formItemId => $file) {
+            $oldExtension = substr($file, strrpos($file, '.') + 1);
+            $fileName = '';
+            if (isset($newFiles[$formItemId]) && $file !== $newFiles[$formItemId]) {
+                if (isset($newFiles[$formItemId])) {
+                    $newFile = $newFiles[$formItemId];
+                    $newExtension = substr($newFile, strrpos($newFile, '.') + 1);
+                    if ($oldExtension === $newExtension) {
+                        continue;
+                    }
+                }
+                $fileName = Configure::read('Setting.file.uploadFileName') . $oldExtension;
+            }
+            if (!isset($newFiles[$formItemId])) {
+                $fileName = Configure::read('Setting.file.uploadFileName') . $oldExtension;
+            }
+            if ($fileName) {
+                $directory = implode(DS, $this->getFormUploadDirectory($entity->get('id'), (string)$formItemId));
+                $deletingFiles[] = $directory . DS . $fileName;
+            }
+        }
+
+        foreach ($deletingFiles as $file) {
+            FileUtility::deleteFile(UPLOAD_RESERVATION_FILE . DS . $file);
+        }
     }
 }

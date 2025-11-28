@@ -133,3 +133,13 @@ define('CAKE_CORE_INCLUDE_PATH', ROOT . DS . 'vendor' . DS . 'cakephp' . DS . 'c
  */
 define('CORE_PATH', CAKE_CORE_INCLUDE_PATH . DS);
 define('CAKE', CORE_PATH . 'src' . DS);
+
+/*
+ * Path to the temporary reservationFile directory.
+ */
+define('TMP_UPLOAD_RESERVATION_FILE', TMP . 'form_upload' . DS . 'reservations');
+
+/*
+ * Path to the reservationFile directory.
+ */
+define('UPLOAD_RESERVATION_FILE', ROOT . DS . 'clients' . DS . $_GLOBALS['CLIENT_NAME']. DS .'form_upload' . DS . 'reservations');

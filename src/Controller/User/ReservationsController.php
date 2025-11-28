@@ -23,6 +23,8 @@ use Cake\Routing\Router;
 
 /**
  * Reservations Controller
+ *
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class ReservationsController extends UserAppController
 {
@@ -39,6 +41,16 @@ class ReservationsController extends UserAppController
         self::CALENDAR_FRAME_CURRENT_WINDOW,
         self::CALENDAR_FRAME_NEW_WINDOW,
     ];
+
+    /**
+     * @inheritDoc
+     */
+    public function initialize(): void
+    {
+        parent::initialize();
+
+        $this->loadFileUploadComponent();
+    }
 
     /**
      * @inheritDoc
