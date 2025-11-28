@@ -303,6 +303,12 @@ class AutoReplyMailHistoriesTable extends AppTable
         if (is_null($type)) {
             if ($reservation->isNew() || $sendReserveAddFlg) {
                 $type = AutoReplyMail::TYPE_RESERVE_ADD;
+                if (
+                    isset($reservation->repeat_reservation) &&
+                    $reservation->repeat_reservation === (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
+                ) {
+                    $type = AutoReplyMail::TYPE_REPEAT_RESERVATION;
+                }
                 $reservationStatusToId = $reservation->get('reservation_status_id');
             } else {
                 if (!$reservation->isDirty('reservation_status_id')) {

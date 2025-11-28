@@ -1204,6 +1204,7 @@ return [
                 AutoReplyMail::TYPE_NOT_MEMBER_LOGIN => 'ゲスト予約確認用認証コード',
                 AutoReplyMail::TYPE_RESERVE_CANCELWAIT_RELEASE => 'キャンセル待ち通知解除',
                 AutoReplyMail::TYPE_OPTIN_MAIL_EDIT => 'メールアドレス変更認証',
+                AutoReplyMail::TYPE_REPEAT_RESERVATION => '繰り返し予約：予約登録',
             ],
             // 会員データを置き換え可能なタイプ
             'userType' => [
@@ -1219,6 +1220,7 @@ return [
                 AutoReplyMail::TYPE_RESERVE_REMINDER_CLOSE,
                 AutoReplyMail::TYPE_STATUS_UPDATE,
                 AutoReplyMail::TYPE_OPTIN_MAIL_EDIT,
+                AutoReplyMail::TYPE_REPEAT_RESERVATION,
             ],
             // 予約データを置き換え可能なタイプ
             'reservationType' => [
@@ -1228,6 +1230,7 @@ return [
                 AutoReplyMail::TYPE_RESERVE_REMINDER,
                 AutoReplyMail::TYPE_RESERVE_REMINDER_CLOSE,
                 AutoReplyMail::TYPE_STATUS_UPDATE,
+                AutoReplyMail::TYPE_REPEAT_RESERVATION,
             ],
             // 変更前の会員データを置き換え可能なタイプ
             'oldUserType' => [
@@ -1236,6 +1239,9 @@ return [
             // 変更前の予約データを置き換え可能なタイプ
             'oldReservationType' => [
                 AutoReplyMail::TYPE_RESERVE_EDIT,
+            ],
+            'repeatReservationType' => [
+                AutoReplyMail::TYPE_REPEAT_RESERVATION,
             ],
             'canSetting' => [
                 'userAuthority' => [
@@ -1280,6 +1286,7 @@ return [
                 AutoReplyMail::TYPE_RESERVE_REMINDER,
                 AutoReplyMail::TYPE_RESERVE_REMINDER_CLOSE,
                 AutoReplyMail::TYPE_STATUS_UPDATE,
+                AutoReplyMail::TYPE_REPEAT_RESERVATION,
             ],
             // カテゴリ設定されている管理者のタイプ
             'adminLabelIdType' => [
@@ -1350,6 +1357,11 @@ return [
                 DefaultMailer::REPLACE_ADDITIONAL_DETAIL_URL => 'reserve_detail_url',
                 DefaultMailer::REPLACE_ADDITIONAL_QR_CODE => 'qr_code',
                 DefaultMailer::REPLACE_ADDITIONAL_MAIL_EDIT_APPROVAL_URL => 'mail_edit_approval_url',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_FROM => 'repeat_reservation_from',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_TO => 'repeat_reservation_to',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK => 'repeat_reservation_day_of_week',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_RESERVED_DATES => 'repeat_reservation_reserved_dates',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES => 'repeat_reservation_can_not_reserved_dates',
             ],
             'label' => [
                 DefaultMailer::REPLACE_USER_ID => '顧客ID',
@@ -1382,6 +1394,11 @@ return [
                 DefaultMailer::REPLACE_ADDITIONAL_DETAIL_URL => '予約詳細画面URL',
                 DefaultMailer::REPLACE_ADDITIONAL_QR_CODE => 'QRコード',
                 DefaultMailer::REPLACE_ADDITIONAL_MAIL_EDIT_APPROVAL_URL => 'メールアドレス変更認証用URL',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_FROM => '繰り返し予約期間From',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_TO => '繰り返し予約期間To',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK => '繰り返し予約曜日',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_RESERVED_DATES => '繰り返し予約日',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES => '繰り返し予約除外日',
             ],
             'column' => [
                 DefaultMailer::REPLACE_USER_ID => 'user.id',
@@ -1413,6 +1430,11 @@ return [
                 DefaultMailer::REPLACE_ADDITIONAL_START_TIME => 'additional.usage_timestamp',
                 DefaultMailer::REPLACE_ADDITIONAL_QR_CODE => 'additional.qr_code',
                 DefaultMailer::REPLACE_ADDITIONAL_MAIL_EDIT_APPROVAL_URL => 'additional.mail_edit_approval_url',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_FROM => 'reservation.usage_timestamp_from',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_TO => 'reservation.date_to',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK => 'reservation.day_of_week',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_RESERVED_DATES => 'reservation.reserve_dates',
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES => 'reservation.can_not_reserve_dates',
             ],
             // 会員データ
             'user' => [
@@ -1458,6 +1480,14 @@ return [
                 DefaultMailer::REPLACE_RESERVE_PAYMENT_STATUS,
                 DefaultMailer::REPLACE_FORM_ITEM_RESERVATION,
                 DefaultMailer::REPLACE_VIDEO_MEETING_INFO,
+            ],
+            //繰り返し予約データ
+            'repeatReservation' => [
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_FROM,
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_TO,
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK,
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_RESERVED_DATES,
+                DefaultMailer::REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES,
             ],
             // 追加データ
             'additional' => [
@@ -1507,6 +1537,9 @@ return [
                 AutoReplyMail::TYPE_OPTIN_MAIL_EDIT => [
                     DefaultMailer::REPLACE_ADDITIONAL_MAIL_EDIT_APPROVAL_URL,
                     DefaultMailer::REPLACE_ADDITIONAL_LIMIT,
+                ],
+                AutoReplyMail::TYPE_REPEAT_RESERVATION => [
+                    DefaultMailer::REPLACE_ADDITIONAL_GUEST_LOGIN_URL,
                 ],
             ],
         ],
