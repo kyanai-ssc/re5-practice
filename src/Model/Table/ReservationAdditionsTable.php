@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use App\Model\AppTable;
+use Cake\ORM\Query;
 
 /**
  * ReservationAdditions Model
@@ -65,5 +66,20 @@ class ReservationAdditionsTable extends AppTable
             $where['ReservationAdditions.form_item_id NOT IN'] = (array)$excludeFormItemId;
         }
         $this->deleteAll($where);
+    }
+
+    /**
+     * 添付ファイルのファインダー
+     *
+     * @param \Cake\ORM\Query $query The query to find with
+     * @param array $options The options to use for the find
+     * @return \Cake\ORM\Query The query builder
+     */
+    public function findFile(Query $query, array $options)
+    {
+        return $query->where([
+            'reservation_id' => $options['reservation_id'],
+            'form_item_id' => $options['form_item_id'],
+        ]);
     }
 }

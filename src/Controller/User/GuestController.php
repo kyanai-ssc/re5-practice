@@ -17,6 +17,8 @@ use Cake\Http\Exception\NotFoundException;
 
 /**
  * GuestController
+ *
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class GuestController extends UserAppController
 {

@@ -835,4 +835,9 @@ class Message
      * 期間内で予約できる日がない
      */
     public const ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM = 'ERROR_NO_AVAILABLE_DATE_IN_INPUTED_TERM';
+
+    /**
+     * ファイルの削除に失敗
+     */
+    public const ERROR_DELETE_FILE = 'ERROR_DELETE_FILE';
 }

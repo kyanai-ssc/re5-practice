@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Utility;
 
+use App\Form\Common\Reservations\FileUploadForm;
+use App\Model\Entity\Reservation;
+use Cake\Core\Configure;
 use Cake\Core\Exception\CakeException;
 use Cake\I18n\FrozenTime;
 use Cake\Validation\Validation;
@@ -436,5 +439,175 @@ class FileUtility
             }
         };
         call_user_func($delete, $directory, $pattern);
+    }
+
+    /**
+     * 予約時のファイル項目の一時ファイルを作成
+     *
+     * @param string $path ディレクトリ
+     * @param string $prefix プレフィックス
+     * @param \Psr\Http\Message\UploadedFileInterface $fileToUpload ファイル情報
+     * @param int|null $permission パーミッション
+     * @return \SplFileInfo
+     */
+    public static function createReservationTmpFile(
+        string $path,
+        string $prefix,
+        $fileToUpload,
+        ?int $permission = null,
+    ) {
+        $name = $fileToUpload->getClientFilename();
+        if (!isset($name)) {
+            throw new CakeException();
+        }
+        $ext = pathinfo($name, PATHINFO_EXTENSION);
+        $randomName = bin2hex(random_bytes(8)) . '.' . strtolower($ext);
+        $tmpSavePath = $path . DS . $randomName;
+
+        if (isset($permission)) {
+            static::changePermission($tmpSavePath, $permission);
+        }
+
+        return new SplFileInfo($tmpSavePath);
+    }
+
+    /**
+     * tmpディレクリに予約時のファイルをアップロード
+     *
+     * @param string $path 一時ディレクトリ
+     * @param \Psr\Http\Message\UploadedFileInterface|null $fileToUpload アップロードファイル
+     * @return bool|array
+     */
+    public static function tmpUploadReservationFile(
+        string $path = TMP_UPLOAD_RESERVATION_FILE,
+        $fileToUpload = null,
+    ) {
+        if (!$fileToUpload) {
+            return false;
+        }
+
+        $sessionData = [];
+
+        $file = static::createReservationTmpFile($path, '', $fileToUpload, 0666);
+        $fileToUpload->moveTo($file->getPathname());
+
+        $data = [
+            'original_file_name' => $fileToUpload->getClientFilename(),
+            'file' => $file->getPathname(),
+            'fileName' => $file->getFilename(),
+            'ext' => static::getFileExtension($fileToUpload->getClientFilename() ?? ''),
+            'size' => $file->getSize(),
+            'new' => true,
+        ];
+        $sessionData[] = $data;
+
+        return $data;
+    }
+
+    /**
+     * アップロードファイルのディレクトリ作成とアップロード
+     *
+     * @param \App\Model\Entity\Reservation $entity エンティティー
+     * @param int $formItemId フォーム項目ID
+     * @param string $path パス
+     * @param array $fileToUpload ファイル
+     * @return bool
+     */
+    public static function createAndUploadReservationFile(
+        Reservation $entity,
+        int $formItemId,
+        string $path = UPLOAD_RESERVATION_FILE,
+        ?array $fileToUpload = null
+    ) {
+        if (!$fileToUpload) {
+            return false;
+        }
+
+        $file = static::createUploadFileDirectoryAndPath(
+            $path,
+            $entity,
+            $formItemId,
+            $fileToUpload,
+            static::FILE_PERMISSION,
+        );
+        if (file_exists($fileToUpload['file'])) {
+            if (copy($fileToUpload['file'], $file)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * アップロードファイルを保存するディレクトリを作成し、アップロードファイルのパスを返す
+     *
+     * @param string $path パス
+     * @param \App\Model\Entity\Reservation $entity エンティティー
+     * @param int $formItemId フォーム項目ID
+     * @param array $fileToUpload ファイル情報
+     * @param int|null $permission パーミッション
+     * @return string $savePath アップロードファイルを保存するパス
+     */
+    public static function createUploadFileDirectoryAndPath(
+        string $path,
+        Reservation $entity,
+        int $formItemId,
+        array $fileToUpload,
+        ?int $permission = null,
+    ) {
+        $reservationId = $entity->get('id');
+        $ext = pathinfo($fileToUpload['original_file_name'], PATHINFO_EXTENSION);
+
+        // 予約枠idの数値によってフォルダーの値を取得
+        $fileNumber = intdiv($reservationId, Configure::readOrFail('Setting.file.separateDirectoryNumber')) + 1;
+
+        $directoryPath = $path . DS . $fileNumber . DS . $reservationId . DS . $formItemId;
+
+        if (!file_exists($directoryPath)) {
+            mkdir($directoryPath, static::DIRECTORY_PERMISSION, true);
+            if (isset($permission)) {
+                static::changePermission($path, $permission);
+            }
+        }
+
+        // パスの作成
+        $fileName = 'form_upload' . '.' . $ext;
+        $savePath = $directoryPath . DS . $fileName;
+
+        if (isset($permission)) {
+            static::changePermission($savePath, $permission);
+        }
+
+        return $savePath;
+    }
+
+    /**
+     * ファイルをディレクトリに保存
+     *
+     * @param array $file 連続予約データ
+     * @param \App\Model\Entity\Reservation $entity エンティティー
+     * @param int $formItemId フォーム項目ID
+     * @return \Cake\Http\Response|null|void
+     */
+    public static function uploadReservationFile(array $file, Reservation $entity, int $formItemId)
+    {
+        $uploadForm = new FileUploadForm();
+        $tmpUpload = [];
+
+        if ($uploadForm->execute($file)) {
+            $tmpUpload = FileUtility::createAndUploadReservationFile(
+                $entity,
+                $formItemId,
+                UPLOAD_RESERVATION_FILE,
+                $file
+            );
+
+            if (!$tmpUpload) {
+                throw new CakeException();
+            }
+        } else {
+            throw new CakeException();
+        }
     }
 }

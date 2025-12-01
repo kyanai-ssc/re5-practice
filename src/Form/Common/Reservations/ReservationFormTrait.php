@@ -29,6 +29,7 @@ use DatePeriod;
 trait ReservationFormTrait
 {
     use ContinuousTrait;
+    use FileTrait;
 
     /**
      * @var array

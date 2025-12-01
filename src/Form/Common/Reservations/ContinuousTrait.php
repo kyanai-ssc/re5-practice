@@ -170,7 +170,10 @@ trait ContinuousTrait
     {
         $entities = [];
         foreach ((array)$this->getReservationForm() as $index => $reservationForm) {
-            $entities[$index] = $reservationForm->getReservationEntity();
+            $reservation = $reservationForm->getReservationEntity();
+            // 保存対象のファイルを判別するために連続予約キーをセット
+            $reservation->set('continuous_key', $index);
+            $entities[$index] = $reservation;
         }
 
         return $entities;

@@ -207,6 +207,9 @@
             app.common.repeatReservation.selectDayOfWeek();
         });
 
+        // 添付ファイル
+        app.common.attachmentFile();
+
         settingForm();
     });
 })(window, jQuery, window.app);

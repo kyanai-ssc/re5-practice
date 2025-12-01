@@ -24,6 +24,8 @@ use Cake\Utility\Hash;
 
 /**
  * Reservations Controller
+ *
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class ReservationsController extends AdminAppController
 {
@@ -31,6 +33,15 @@ class ReservationsController extends AdminAppController
 
     public const TOKEN_VALIDATION_ADD = 'reservations_add';
     public const TOKEN_VALIDATION_EDIT = 'reservations_edit';
+
+    /**
+     * @inheritDoc
+     */
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->loadFileUploadComponent();
+    }
 
     /**
      * @inheritDoc

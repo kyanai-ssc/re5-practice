@@ -7,6 +7,7 @@ use App\Controller\Admin\ReservationsController as BaseReservationsController;
 use App\Controller\AdminAppController;
 use App\Controller\Traits\AjaxReservationsTrait;
 use App\Controller\Traits\AjaxTrait;
+use App\Controller\Traits\FileTrait;
 use App\Form\Admin\Reservations\CalculateChargeForm;
 use App\Form\Admin\Reservations\CalendarDetailForm;
 use App\Form\Admin\Reservations\CalendarForm;
@@ -26,11 +27,13 @@ use Cake\Http\Exception\BadRequestException;
  * Reservations Controller
  *
  * @property \App\Controller\Component\ImportComponent $Import
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class ReservationsController extends AdminAppController
 {
     use AjaxTrait;
     use AjaxReservationsTrait;
+    use FileTrait;
 
     public const CALENDAR_TIME_OUT = 120;
 
@@ -45,6 +48,7 @@ class ReservationsController extends AdminAppController
         $this->loadComponent('Import', [
             'model' => 'Reservations',
         ]);
+        $this->loadFileUploadComponent();
     }
 
     /**
@@ -72,6 +76,8 @@ class ReservationsController extends AdminAppController
             'addVideoMeeting',
             'deleteVideoMeeting',
             'addSmartLock',
+            'uploadFile',
+            'deleteTmpFile',
         ]);
 
         return $response;
@@ -599,5 +605,35 @@ class ReservationsController extends AdminAppController
         $this->set([
             'reservationId' => $reservation->get('id'),
         ]);
+    }
+
+    /**
+     * Upload method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function uploadFile()
+    {
+        $this->uploadFileAction();
+    }
+
+    /**
+     * DeleteTmpFile method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function deleteTmpFile()
+    {
+        $this->deleteTmpFileAction();
+    }
+
+    /**
+     * DeleteSavedFile method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function deleteSavedFile()
+    {
+        $this->deleteSavedFileAction();
     }
 }

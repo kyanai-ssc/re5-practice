@@ -78,6 +78,9 @@ class TmpDeleteCommand extends Command
         /** アップロードのtmpファイルを削除 */
         FileUtility::tmpFileDeleteOverTime(TMP_UPLOAD_IMPORT, $deleteTime);
 
+        /** ファイル項目のtmpファイルを削除 */
+        FileUtility::tmpFileDeleteOverTime(TMP_UPLOAD_RESERVATION_FILE, $deleteTime);
+
         /** @var \App\Model\Table\AppAccessTokensTable $appAccessTokensTable */
         $appAccessTokensTable = $this->getTableLocator()->get('AppAccessTokens');
         $appAccessTokensTable->deleteAll(['expiration_timestamp <=' => $nowTime]);

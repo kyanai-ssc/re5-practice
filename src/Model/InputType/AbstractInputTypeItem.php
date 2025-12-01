@@ -65,6 +65,11 @@ abstract class AbstractInputTypeItem
     protected $displayType = null;
 
     /**
+     * @var \App\Model\Entity\Reservation|null
+     */
+    protected $reservationEntity = null;
+
+    /**
      * Constructor.
      *
      * @param int $formType フォームタイプ
@@ -426,5 +431,26 @@ abstract class AbstractInputTypeItem
     public function getAppValue(?array $options = null)
     {
         return $this->getDetailValue($options);
+    }
+
+    /**
+     * 予約エンティティを取得
+     *
+     * @return \App\Model\Entity\Reservation|null エンティティ
+     */
+    public function getReservationEntity()
+    {
+        return $this->reservationEntity;
+    }
+
+    /**
+     * 予約エンティティを設定
+     *
+     * @param \App\Model\Entity\Reservation $reservation 予約エンティティ
+     * @return void
+     */
+    public function setReservationEntity($reservation): void
+    {
+        $this->reservationEntity = $reservation;
     }
 }

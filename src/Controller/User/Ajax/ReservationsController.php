@@ -5,6 +5,7 @@ namespace App\Controller\User\Ajax;
 
 use App\Controller\Traits\AjaxReservationsTrait;
 use App\Controller\Traits\AjaxTrait;
+use App\Controller\Traits\FileTrait;
 use App\Controller\User\ReservationsController as BaseReservationsController;
 use App\Controller\UserAppController;
 use App\Form\User\Reservations\CalendarForm;
@@ -19,11 +20,14 @@ use Cake\Http\Exception\BadRequestException;
 
 /**
  * Reservations Controller
+ *
+ * @property \App\Controller\Component\FileUploadComponent $FileUpload
  */
 class ReservationsController extends UserAppController
 {
     use AjaxReservationsTrait;
     use AjaxTrait;
+    use FileTrait;
 
     /**
      * @inheritDoc
@@ -33,6 +37,7 @@ class ReservationsController extends UserAppController
         parent::initialize();
 
         $this->loadComponent('Ajax');
+        $this->loadFileUploadComponent();
     }
 
     /**
@@ -47,6 +52,9 @@ class ReservationsController extends UserAppController
             'calendarPage',
             'calendarPopup',
             'changeForm',
+            'uploadFile',
+            'deleteTmpFile',
+            'deleteSavedFile',
         ]);
         $this->FormProtection->setConfig('unlockedActions', [
             'calendar',
@@ -57,6 +65,9 @@ class ReservationsController extends UserAppController
             'viewContinuous',
             'removeContinuous',
             'removeAllContinuous',
+            'uploadFile',
+            'deleteTmpFile',
+            'deleteSavedFile',
         ]);
 
         return $response;
@@ -273,5 +284,35 @@ class ReservationsController extends UserAppController
     public function removeAllContinuous()
     {
         $this->removeAllContinuousAction();
+    }
+
+    /**
+     * Upload method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function uploadFile()
+    {
+        $this->uploadFileAction();
+    }
+
+    /**
+     * DeleteTmpFile method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function deleteTmpFile()
+    {
+        $this->deleteTmpFileAction();
+    }
+
+    /**
+     * DeleteSavedFile method
+     *
+     * @return \Cake\Http\Response|null|void
+     */
+    public function deleteSavedFile()
+    {
+        $this->deleteSavedFileAction();
     }
 }
