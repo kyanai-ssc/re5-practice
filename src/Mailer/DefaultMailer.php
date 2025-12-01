@@ -206,6 +206,31 @@ class DefaultMailer extends Mailer
      */
     public const REPLACE_RESERVE_SMART_LOCK_UNIVERSAL_ACCESS_KEY = 32;
 
+    /**
+     * 置き換え文字対象：繰り返し予約期間From
+     */
+    public const REPLACE_REPEAT_RESERVATION_FROM = 33;
+
+    /**
+     * 置き換え文字対象：繰り返し予約期間To
+     */
+    public const REPLACE_REPEAT_RESERVATION_TO = 34;
+
+    /**
+     * 置き換え文字対象：繰り返し予約曜日
+     */
+    public const REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK = 35;
+
+    /**
+     * 置き換え文字対象：繰り返し予約日
+     */
+    public const REPLACE_REPEAT_RESERVATION_RESERVED_DATES = 36;
+
+    /**
+     * 置き換え文字対象：繰り返し予約除外日
+     */
+    public const REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES = 37;
+
     public const TEST_MAIL_LOCAL_PART = 'test-mail';
 
     /**
@@ -241,6 +266,9 @@ class DefaultMailer extends Mailer
         }
         if (ArrayUtility::inArray($type, Configure::readOrFail('Master.autoReplyMail.reservationType'))) {
             $replaceCodes = array_merge($replaceCodes, Configure::readOrFail('Master.mailReplace.reservation'));
+        }
+        if (ArrayUtility::inArray($type, Configure::readOrFail('Master.autoReplyMail.repeatReservationType'))) {
+            $replaceCodes = array_merge($replaceCodes, Configure::readOrFail('Master.mailReplace.repeatReservation'));
         }
         $replaceCodes = array_merge(
             $replaceCodes,
@@ -852,6 +880,31 @@ class DefaultMailer extends Mailer
             if (isset($value)) {
                 $value = $value->format('Y/m/d H:i');
             }
+        } elseif (
+            ((string)$code) === ((string)static::REPLACE_REPEAT_RESERVATION_DAY_OF_WEEK)
+        ) {
+            if ($options['reservation']['select_day_of_week'] === Configure::readOrFail('Master.common.flg.on')) {
+                $week = Configure::readOrFail('Master.common.week');
+                $value = $week[(string)$value];
+            }
+        } elseif (
+            ((string)$code) === ((string)static::REPLACE_REPEAT_RESERVATION_FROM)
+        ) {
+            if (isset($value)) {
+                $value = $value->format('Y/m/d');
+            }
+        } elseif (
+            ((string)$code) === ((string)static::REPLACE_REPEAT_RESERVATION_RESERVED_DATES)
+            || ((string)$code) === ((string)static::REPLACE_REPEAT_RESERVATION_CAN_NOT_RESERVED_DATES)
+        ) {
+            $values = null;
+            foreach ($value as $dateTime) {
+                $date = DateTimeUtility::convertToDateTimeObject($dateTime);
+                if ($date) {
+                    $values[] = $date->format('Y/m/d');
+                }
+            }
+            $value = $values;
         }
 
         if (is_array($value)) {

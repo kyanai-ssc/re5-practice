@@ -123,6 +123,11 @@ class AutoReplyMail extends AppEntity
     public const TYPE_OPTIN_MAIL_EDIT = 17;
 
     /**
+     * タイプ：繰り返し予約：予約登録
+     */
+    public const TYPE_REPEAT_RESERVATION = 18;
+
+    /**
      * 下位ラベル除外フラグ OFF
      */
     public const EXCEPT_SUB_LABEL_FLG_OFF = 0;

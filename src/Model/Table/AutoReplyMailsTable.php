@@ -1060,7 +1060,7 @@ class AutoReplyMailsTable extends AppTable
 
         // ラベル
         $labelId = Hash::get($options, 'inputs.label_id');
-        if (((string)$labelId) !== '') {
+        if (((string)$labelId) !== '' && $type !== AutoReplyMail::TYPE_REPEAT_RESERVATION) {
             $limit = Configure::readOrFail('Setting.label.depth') - 1;
 
             $query->join([
@@ -1116,7 +1116,10 @@ class AutoReplyMailsTable extends AppTable
         // ステータス
         $statusFrom = Hash::get($options, 'inputs.reservation_status_from_id');
         $statusTo = Hash::get($options, 'inputs.reservation_status_to_id');
-        if (((string)$statusFrom) !== '' || ((string)$statusTo) !== '') {
+        if (
+            (((string)$statusFrom) !== '' || ((string)$statusTo) !== '' ) &&
+            $type !== AutoReplyMail::TYPE_REPEAT_RESERVATION
+        ) {
             $query->innerJoinWith('AutoReplyMailStatuses', function ($statusQuery) use ($statusFrom, $statusTo) {
                 if (((string)$statusFrom) !== '') {
                     $statusQuery->where([

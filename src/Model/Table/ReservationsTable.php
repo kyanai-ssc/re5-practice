@@ -4375,7 +4375,16 @@ class ReservationsTable extends AppTable implements ImportableTableInterface
                         }
                     } else {
                         foreach ($entities as $reservation) {
-                            $this->sendReservationMail($reservation);
+                            if (
+                                isset($reservation->repeat_reservation) &&
+                                $reservation->repeat_reservation ===
+                                (string)Reservation::RESERVATION_TYPE_REPEAT_RESERVATION
+                            ) {
+                                $this->sendReservationMail($reservation);
+                                break;
+                            } else {
+                                $this->sendReservationMail($reservation);
+                            }
                         }
                     }
                 }
